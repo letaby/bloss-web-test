@@ -322,55 +322,6 @@ export const groupBy = (array, property) =>
   }, {});
 
 export let loccoaches = {
-    "75uwmNAGgMafFErRdm830Llj4752": {
-      provider: "google",
-      photo:
-        "https://firebasestorage.googleapis.com/v0/b/rgonline-1d3e0.appspot.com/o/111.jpeg?alt=media&token=b52cfe1a-484d-4c95-b619-202f3a19fe1d",
-      timezone: 3,
-      token:
-        "e25rUzFwJUlfvLhtej8Aei:APA91bFyJn9C7wYZemBfqQ1peyZixID6XSmy05oQv72xNrZ_jFbmb-YdXckynu3YwWuklgc3JvwWVoV4MuXdRSctmQ8kt4rnAPQPHqzeTcSRlLkutiFvCr93JMOoCWEqS9PVE9gD9hgL",
-      name: "Daria",
-      rates: {
-        "CV7IrtFXywQIUNvqvwG5V17AvCu2-1684895498535-1-CV7IrtFXywQIUNvqvwG5V17AvCu2": 5,
-        "CV7IrtFXywQIUNvqvwG5V17AvCu2-1687450517754-1-CV7IrtFXywQIUNvqvwG5V17AvCu2": 5,
-        "CV7IrtFXywQIUNvqvwG5V17AvCu2-1684895498535-2-CV7IrtFXywQIUNvqvwG5V17AvCu2": 5,
-        "CV7IrtFXywQIUNvqvwG5V17AvCu2-1687450723300-1-CV7IrtFXywQIUNvqvwG5V17AvCu2": 5,
-        "CV7IrtFXywQIUNvqvwG5V17AvCu2-1688911957985-1-CV7IrtFXywQIUNvqvwG5V17AvCu2": 5,
-        "CV7IrtFXywQIUNvqvwG5V17AvCu2-1688911832410-1-CV7IrtFXywQIUNvqvwG5V17AvCu2": 5,
-        "CV7IrtFXywQIUNvqvwG5V17AvCu2-1686706991011-1-CV7IrtFXywQIUNvqvwG5V17AvCu2": 5,
-        "CV7IrtFXywQIUNvqvwG5V17AvCu2-1687451066020-1-CV7IrtFXywQIUNvqvwG5V17AvCu2": 5,
-        "CV7IrtFXywQIUNvqvwG5V17AvCu2-1687451169078-1-CV7IrtFXywQIUNvqvwG5V17AvCu2": 5,
-      },
-      status: "approved",
-      programs: ["1644572404794"],
-      stat: { privats: 11, hours: 16.5, classes: 11 },
-      uid: "75uwmNAGgMafFErRdm830Llj4752",
-      expCoach: 5,
-      created: 1682235659168,
-      grPrice: 25,
-      price: 35,
-      expAthl: 10,
-      bio: null,
-      slots: {
-        1687419397191: {
-          id: "1687419397191",
-          busy: {
-            "CV7IrtFXywQIUNvqvwG5V17AvCu2-1687661882868-1": {
-              from: 1690747200000,
-              id: "CV7IrtFXywQIUNvqvwG5V17AvCu2-1687661882868-1",
-              to: 1690752600000,
-            },
-          },
-          from: 1690693200000,
-          to: 1690756200000,
-        },
-        1689794605453: {
-          to: 1693175400000,
-          from: 1693112400000,
-          id: "1689794605453",
-        },
-      },
-    },
     SxYzntNZWMRJQjPSGoJeFC1POpq2: {
       photo:
         "https://firebasestorage.googleapis.com/v0/b/rgonline-1d3e0.appspot.com/o/Ana.jpg?alt=media&token=5d77bd4b-5914-42f0-a057-04da79735283",
