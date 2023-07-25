@@ -1,7 +1,6 @@
 import React, { useCallback, useRef } from "react";
-import { ScrollView, View } from "react-native";
+// import Sheet from "react-modal-sheet";
 import { BottomSheet } from "react-spring-bottom-sheet";
-// import BottomSheet from "react-modal-sheet";
 import "react-spring-bottom-sheet/dist/style.css";
 import { wheight, wwidth } from "../commons/utils";
 import { ModalBack, Press } from "../commons/UI";
@@ -26,9 +25,8 @@ export default ({ height = wheight * 0.9, snaps = [height], goBack, ...r }) => {
         snapPoints={() => snaps || [height / 3, height]}
         // skipInitialTransition
         // initialFocusRef
-
         {...{ onDismiss }}
-        style={{ maxWidth: wwidth }}
+        // style={{ maxWidth: wwidth }}
       >
         <Press>{r.children}</Press>
       </BottomSheet>
@@ -36,8 +34,7 @@ export default ({ height = wheight * 0.9, snaps = [height], goBack, ...r }) => {
   );
 };
 
-/* for react-modal-sheet
-
+/*  для  "react-modal-sheet"
   return (
     <Sheet
       isOpen
