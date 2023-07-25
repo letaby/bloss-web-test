@@ -15,7 +15,6 @@ import {
   CloseIcon,
   AbsLoader,
   BLUE,
-  BACKGRAY,
 } from "../commons/UI";
 import { CartCard, cartHeight } from "../comp/EventCard";
 

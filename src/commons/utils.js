@@ -17,6 +17,21 @@ let utc = require("dayjs/plugin/utc"),
 dayjs.extend(utc);
 dayjs.extend(zone);
 
+export const {
+    innerWidth,
+    innerHeight: wheight,
+    localStorage: localStor,
+  } = window,
+  isDesktop = innerWidth > 450,
+  wwidth = isDesktop ? 450 : innerWidth,
+  paddTop = 0,
+  paddBottom = 0,
+  tabbarHeight = 62 + paddBottom,
+  modalHeight = wheight - paddTop,
+  SUPPORT = "anastasia_bunny@mail.ru",
+  { isAndroid } = require("react-device-detect"),
+  { clipboard } = navigator;
+
 export const db = getFirestore(app),
   rdb = getDatabase(app),
   dbCoaches = collection(db, "coaches"),
@@ -26,20 +41,6 @@ export const db = getFirestore(app),
   dbOrders = collection(db, "orders"),
   dbBooks = (myid) =>
     query(dbEvents, where("clientsIds", "array-contains", myid || "00"));
-
-export const {
-    innerWidth,
-    innerHeight: wheight,
-    localStorage: localStor,
-  } = window,
-  wwidth = innerWidth > 450 ? 450 : innerWidth,
-  paddTop = 0,
-  paddBottom = 0,
-  tabbarHeight = 62 + paddBottom,
-  modalHeight = wheight - paddTop,
-  SUPPORT = "anastasia_bunny@mail.ru",
-  { isAndroid } = require("react-device-detect"),
-  { clipboard } = navigator;
 
 export const openRefundPlcy = () =>
   Linking.openURL("https://bloss.am/refunds").catch(

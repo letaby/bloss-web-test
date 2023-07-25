@@ -1,9 +1,5 @@
-//import "setimmediate";
-//import { GestureHandlerRootView } from "react-native-gesture-handler";
 import React, { useEffect, useRef } from "react";
 import styled from "styled-components/native";
-//import { RootSiblingParent } from "react-native-root-siblings";
-// import { StatusBar } from "expo-status-bar";
 import "react-confirm-alert/src/react-confirm-alert.css";
 import "react-toastify/dist/ReactToastify.css";
 import "react-lazy-load-image-component/src/effects/blur.css";
@@ -25,7 +21,7 @@ import { StoresProvider, useAuth, useClient } from "./src/commons/Stores.js";
 import EffectsProvider from "./src/commons/EffectsProvider.js";
 import { handleGoogleAuthUser } from "./src/commons/AuthStore.js";
 import { rootNavg } from "./src/commons/RootNavigation";
-import { tabbarHeight } from "./src/commons/utils.js";
+import { isDesktop, tabbarHeight } from "./src/commons/utils.js";
 import Login from "./src/screens/Login.js";
 import Home from "./src/screens/Home";
 import Coach from "./src/screens/Coach";
@@ -75,46 +71,8 @@ function App() {
 }
 export default App;
 
-let modal = { presentation: "modal" },
+let modal = { presentation: isDesktop ? "transparentModal" : "modal" },
   transpModal = { presentation: "transparentModal" };
-
-let linking = {
-  config: {
-    screens: {
-      AddInfo: {
-        path: "info",
-        stringify: { id: () => ``, coachID: () => `` },
-      },
-      AddGroup: "add/:id",
-      Balance: "balance",
-      Filters: "filter",
-      Image: "i",
-      CoachModal: ":coachID",
-      TabStack: {
-        screens: {
-          HomeStack: {
-            screens: {
-              Home: "",
-              Coach: {
-                path: "coaches/:coachID/:modal/:offset",
-                stringify: { modal: () => ``, offset: () => `` },
-              },
-              Event: ":id",
-            },
-          },
-          ProfileStack: {
-            screens: {
-              Profile: "profile",
-              EditProfile: "edit",
-              Event: ":eid",
-              Order: ":orderID",
-            },
-          },
-        },
-      },
-    },
-  },
-};
 
 let Routes = observer(() => {
   useFonts({
@@ -134,7 +92,9 @@ let Routes = observer(() => {
   // }, []);
 
   return (
-    <NavigationContainer ref={rootNavg}>
+    <NavigationContainer
+      ref={rootNavg} //{...{linking}}
+    >
       <Stack.Navigator
         screenOptions={{ headerShown: false, animationEnabled: true }}
       >
@@ -317,3 +277,41 @@ let Mark = styled.View`
   border-radius: 10px;
   background: ${RED};
 `;
+
+let linking = {
+  config: {
+    screens: {
+      AddInfo: {
+        path: "info",
+        stringify: { id: () => ``, coachID: () => `` },
+      },
+      AddGroup: "add/:id",
+      Balance: "balance",
+      Filters: "filter",
+      Image: "i",
+      CoachModal: ":coachID",
+      TabStack: {
+        screens: {
+          HomeStack: {
+            screens: {
+              Home: "",
+              Coach: {
+                path: "coaches/:coachID/:modal/:offset",
+                stringify: { modal: () => ``, offset: () => `` },
+              },
+              Event: ":id",
+            },
+          },
+          ProfileStack: {
+            screens: {
+              Profile: "profile",
+              EditProfile: "edit",
+              Event: ":eid",
+              Order: ":orderID",
+            },
+          },
+        },
+      },
+    },
+  },
+};
