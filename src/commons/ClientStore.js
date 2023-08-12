@@ -15,21 +15,23 @@ import { navigate, getRoute } from "./RootNavigation";
 import {
   dbQueryToObj,
   db,
-  showToast,
+  showtoast,
   getDay,
   tabbarHeight,
   handleRoutesCheck,
   getBalance,
   dayAgo,
   locorder,
+  isDesktop,
 } from "./utils";
 import { dbbatchOrderEvents } from "./orderChecks";
 
 export default class Client {
   privats = {};
-  // orders =  {};
+  // orders = {};
   orders = { [locorder.id]: locorder };
-  load = false; //true;
+  passed = {};
+  load = true;
 
   constructor(school, auth) {
     makeAutoObservable(this);
@@ -58,7 +60,9 @@ export default class Client {
 
   get privatsArr() {
     return orderBy(
-      Object.values(this.privats).filter((e) => e?.active),
+      Object.values(this.privats).filter(
+        (e) => e?.active && e?.to > Date.now()
+      ),
       "from"
     );
   }
@@ -129,6 +133,11 @@ export default class Client {
     Object.keys(groups)[0] && this.school.setGroups(groups);
   };
 
+  addPassed = (e) => {
+    if (!e.day && e.from) e.day = getDay(e.from);
+    return (this.passed[e.id] = e);
+  };
+
   markViewed = async (id) => {
     let curr = this.books[id],
       batch = writeBatch(db);
@@ -136,6 +145,7 @@ export default class Client {
     batch.delete(doc(db, "events", id));
     batch.set(doc(db, "passed", id), Object.assign(curr, { viewed: true }));
     batch.commit();
+    curr.to < Date.now() && this.addPassed(curr);
   };
 
   setLoad = (val) => (this.load = val || null);
@@ -147,7 +157,7 @@ export default class Client {
 
   getOrder = async (id) =>
     await getDoc(doc(db, "orders", id)).then(
-      (d) => d?.exists && this.updateOrder(d.data())
+      (d) => d?.exists() && this.updateOrder(d.data())
     );
 
   get lastOrder() {
@@ -218,7 +228,7 @@ export default class Client {
 
     if (payCard) {
       let stripe = await axios
-        .post(`https://blossam.xyz/pay`, {
+        .post(`https://blossm.site/pay`, {
           client: mystripeID,
           name,
           email,
@@ -236,6 +246,7 @@ export default class Client {
     batch.set(doc(db, "orders", orderID), order);
 
     let error;
+
     batch
       .commit()
       .catch((er) => (error = er))
@@ -250,7 +261,9 @@ export default class Client {
           screen: "Profile",
           params: { orderID, init: true },
         });
-        if (next && order.payurl) next();
+        if (next && (!payCard || order.payurl)) next();
+        if (!payCard)
+          this.auth.updateBalance({ time: created, sum: -total, orderID });
       });
   };
 
@@ -367,7 +380,11 @@ export default class Client {
       orderBy(removed, "from").forEach((d, ind) => {
         let { id } = d;
         // if passed
-        if (d.to < Date.now()) return !d.privat && this.school.deleteGroup(id); // if privat, it'll be auto-deleted by 'needSetState && setBooks'. But 'setbooks' doesn't delete group classes by itself
+        if (d.to < Date.now())
+          return (
+            !d.privat && this.school.deleteGroup(id),
+            d.clientsIds?.includes(myid) && this.addPassed(d)
+          ); // if privat, it'll be auto-deleted by 'needSetState && setBooks'. But 'setbooks' doesn't delete group classes by itself
         // else, toast + un-book it (deleteBook), means delete event if it's a private OR just remove user's uid if it's a group
         let curr = this.books[id];
         setTimeout(
@@ -405,10 +422,13 @@ let toast = (type, data, index = 0) => {
     if (infocus) return;
     let { isINProfileStack } = handleRoutesCheck(),
       params = id ? { id } : undefined;
-    return isINProfileStack
+
+    return isDesktop && id
+      ? navigate("Event", params)
+      : isINProfileStack
       ? navigate(id ? "Event" : "Profile", params)
       : navigate("ProfileStack", { screen: "Profile", params });
   };
 
-  return showToast(text, 3500, tabbarHeight + 150 + index * (54 + 16), onPress); // 54+16 is toast's height + margin
+  return showtoast(text, 3500, tabbarHeight + 150 + index * (54 + 16), onPress); // 54+16 is toast's height + margin
 };

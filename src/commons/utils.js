@@ -1,15 +1,12 @@
 import { Linking } from "react-native";
 import { confirmAlert } from "react-confirm-alert"; // Import
-// import Toast from "react-native-toast-message";
-// import Toast2 from "react-native-root-toast";
 import { getFirestore, collection, query, where } from "firebase/firestore";
-import { getDatabase } from "firebase/database";
-import { toast, cssTransition } from "react-toastify";
-import app from "../../config/index";
+import { getDatabase, ref } from "firebase/database";
+import Toast from "react-native-toast-message";
+import app from "../../config";
 import dayjs from "dayjs";
 import orderBy from "lodash/orderBy";
 import { rootNavg } from "./RootNavigation";
-import { ACTIVEGRAY } from "./UI";
 import "./styles.css";
 
 let utc = require("dayjs/plugin/utc"),
@@ -18,25 +15,23 @@ dayjs.extend(utc);
 dayjs.extend(zone);
 
 export const {
-    innerWidth,
+    innerWidth: screenWidth,
     innerHeight: wheight,
     localStorage: localStor,
   } = window,
-  isDesktop = innerWidth > 450,
-  wwidth = isDesktop ? 450 : innerWidth,
-  modalWidth = innerWidth > 900 ? 550 : wwidth,
-  paddTop = 0,
-  paddBottom = 0,
-  tabbarHeight = 62 + paddBottom,
-  modalHeight = wheight - paddTop,
+  isDesktop = screenWidth > 450,
+  wwidth = isDesktop ? 450 : screenWidth,
+  modalWidth = screenWidth > 900 ? 550 : wwidth,
+  deskPadding = (screenWidth - wwidth) / 2,
+  tabbarHeight = 62,
   SUPPORT = "anastasia_bunny@mail.ru",
   { isAndroid } = require("react-device-detect"),
   { clipboard } = navigator;
 
 export const db = getFirestore(app),
   rdb = getDatabase(app),
+  rdbProgs = ref(rdb, "programs"),
   dbCoaches = collection(db, "coaches"),
-  dbProgs = collection(db, "programs"),
   dbEvents = collection(db, "events"),
   dbUsers = collection(db, "users"),
   dbOrders = collection(db, "orders"),
@@ -55,7 +50,7 @@ export const openRefundPlcy = () =>
 
 export const dayAgo = () => Date.now() - 24 * 60 * 60000;
 
-export let callAlert = (title, message, buttons, afterClose) =>
+export let callAlert = (title, message, buttons) =>
   confirmAlert({
     title,
     message: message || undefined,
@@ -64,7 +59,6 @@ export let callAlert = (title, message, buttons, afterClose) =>
     closeOnClickOutside: true,
     keyCodeForClose: [8, 32],
     overlayClassName: "overlay-custom-class-name",
-    afterClose: afterClose || undefined,
   });
 
 export const contactsAlert = (subj, text, isSecond) =>
@@ -104,17 +98,13 @@ export const contactsAlert = (subj, text, isSecond) =>
   );
 
 export const copyAlert = (title, desc, data, subj) => {
-  let proceed = () => {
-    copytext(data);
-    // if (subj) setTimeout(() => contactsAlert(subj, data, 2), 200);
-    return;
-  };
-  return callAlert(
-    title,
-    desc,
-    [{ label: "Copy" + (subj ? " & contact us" : ""), onClick: proceed }],
-    () => (console.log("afterclose"), contactsAlert(subj, data, 2))
+  let proceed = () => (
+    copytext(data, "ignore"),
+    subj && setTimeout(() => contactsAlert(subj, data, 2), 100)
   );
+  return callAlert(title, desc, [
+    { label: "Copy" + (subj ? " & contact us" : ""), onClick: proceed },
+  ]);
 };
 
 export const contactSuprt = ({ myid, id, orderID }) => {
@@ -214,40 +204,21 @@ export const durtnText = (num, full) => {
   );
 };
 
-export const copytext = (tx) => {
+export const copytext = (tx, ignoreToast) => {
   if (clipboard) clipboard.writeText(tx);
   else document.ex.execCommand("copy", true, tx);
-  showToast("copied", 500);
+  if (!ignoreToast) showtoast("copied", 500);
 };
 
-export const showToast = (tx, dur, offset, onPress) =>
-  toast(tx, {
-    position: "top-center",
-    autoClose: dur || 2500,
-    hideProgressBar: true,
-    closeOnClick: true,
-    pauseOnHover: false,
-    draggable: false,
-    // progress: undefined,
-    onClick: onPress ? () => (onPress(), toast.dismiss()) : toast.dismiss,
-    style: { backgroundColor: ACTIVEGRAY, color: "white" },
-    // disable transition
-    transition: cssTransition({
-      enter: "Toastify__slide-enter--top-center",
-      exit: "Toastify__slide-exit--top-center",
-      duration: 50,
-    }),
+export const showtoast = (tx, dur, offset, onPress) =>
+  Toast.show({
+    position: "bottom",
+    visibilityTime: dur || 2500,
+    type: "basic",
+    text1: tx,
+    bottomOffset: offset || tabbarHeight + 16,
+    onPress: onPress ? () => (onPress(), Toast.hide()) : Toast.hide,
   });
-
-// (text, dur, offset, onPress) =>
-//   Toast.show({
-//     position: "bottom",
-//     visibilityTime: dur || 2500,
-//     type: "basic",
-//     text1: text,
-//     bottomOffset: offset || tabbarHeight + 150,
-//     onPress: onPress ? () => (onPress(), Toast.hide()) : Toast.hide,
-//   });
 
 //   Toast2.show(` ${text}  `, {
 //     duration: dur || 2500,
@@ -459,7 +430,7 @@ export let loccoaches = {
       grPrice: 30,
       token: null,
       uid: "SxYzntNZWMRJQjPSGoJeFC1POpq2",
-      programs: ["1644433221158", "1657214001589", "1679046800493"],
+      programs: ["1657214001589", "1644433221158", "1679046800493"],
     },
     atFxsMVXYEQ1JMjnLQt5dCYEATV2: {
       price: 30,
@@ -627,7 +598,7 @@ export let loccoaches = {
     },
   },
   locevents = {
-    1689788478261: {
+    1690293582945: {
       to: 1693157400000,
       clients: {
         MzSgfDRBdagBnJoWNG5WoIfAO5k1: {
@@ -638,12 +609,12 @@ export let loccoaches = {
           time: 17929239232323,
         },
       },
-      created: 1689788478261,
+      created: 1690293582945,
       slotID: "1689401532422",
-      clientsIds: ["MzSgfDRBdagBnJoWNG5WoIfAO5k1"],
+      // clientsIds: ["MzSgfDRBdagBnJoWNG5WoIfAO5k1"],
       coachID: "SxYzntNZWMRJQjPSGoJeFC1POpq2",
       active: true,
-      id: "1689788478261",
+      id: "1690293582945",
       age: 17,
       clientsQuant: 1,
       progName: "Rhythmic gymnastics",
@@ -696,7 +667,7 @@ export let loccoaches = {
     bio: null,
     created: 1679182600839,
     phone: "+6666666",
-    // photo: "https://telegra.ph/file/356d4eb538f7a8052175f.jpg",
+    photo: "https://telegra.ph/file/356d4eb538f7a8052175f.jpg",
     timezoneName: "Europe/Minsk",
     name: "Oleg Petruchik",
     stat: { classes: 4, privats: 3, hours: 3.916666666666667 },
@@ -706,7 +677,7 @@ export let loccoaches = {
     device: "web",
     uid: "MzSgfDRBdagBnJoWNG5WoIfAO5k1",
     stripeID: "cus_O7K9rW9gPqCjY8",
-    age: 8,
+    age: 14,
     timezone: 3,
     provider: "google",
     balance: {

@@ -1,25 +1,28 @@
 import React, { useState } from "react";
 import {
   View,
-  StatusBar,
   ActivityIndicator,
   Pressable,
   TouchableOpacity as Touchbl,
   ImageBackground,
   Linking,
+  StyleSheet,
 } from "react-native";
 import styled from "styled-components/native";
+import rstyled from "styled-components";
 // // import { LazyLoadImage } from "react-lazy-load-image-component";
 // import "react-lazy-load-image-component/src/effects/blur.css";
 import { RefreshControl } from "react-native-web-refresh-control";
+import { useNavigation } from "@react-navigation/native";
 import AntDesign from "@expo/vector-icons/AntDesign";
 import Entypo from "@expo/vector-icons/Entypo";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialIcons from "@expo/vector-icons/MaterialIcons";
-import { wheight, wwidth, contactSuprt } from "./utils";
+import { wheight, wwidth, contactSuprt, isDesktop } from "./utils";
 import { useClient } from "./Stores";
-import { SafeAreaView } from "react-native-web";
+
+let isMobl = true; //window.innerWidth <= 450;
 
 export const GRAY = "#999",
   DGRAY = "#444",
@@ -37,19 +40,7 @@ export const GRAY = "#999",
   RED = "#C72415"; //'#ea4335';
 
 export const Image = ImageBackground,
-  Image2 = ({ style, source: s }) => (
-    <Image //LazyLoadImage
-      src={s.uri}
-      effect="blur"
-      placeholderSrc={s.uri}
-      // {...{ style }}
-      // wrapperProps={{ style }}
-      width={style.width}
-      height={style.height}
-    />
-  );
-
-export const Press = Pressable,
+  Press = Pressable,
   Row = styled.View`
     flex-direction: row;
   `,
@@ -69,47 +60,91 @@ export const Press = Pressable,
   Text14 = styled.Text`
     font-family: "CeraPro-Regular";
     color: black;
-    font-size: 14px;
-    line-height: 18px;
+    font-size: ${isMobl ? 14 : 12}px;
+    line-height: ${isMobl ? 18 : 15.5}px;
     flex-shrink: 1;
     text-align-vertical: top;
     /* include-font-padding: false;  // для разных line-height по разному себя ведет  */
   `,
   Text10 = styled(Text14)`
-    font-size: 10px;
-    line-height: 13px;
+    font-size: ${isMobl ? 10 : 9}px;
+    line-height: ${isMobl ? 13 : 11}px;
   `,
   Text11 = styled(Text10)`
-    font-size: 11px;
+    font-size: ${isMobl ? 11 : 10}px;
   `,
   Text12 = styled(Text14)`
-    font-size: 12px;
-    line-height: 15px;
+    font-size: ${isMobl ? 12 : 10.5}px;
+    line-height: ${isMobl ? 15 : 13}px;
   `,
   Text15 = styled(Text14)`
-    font-size: 15px;
-    line-height: 20px;
+    font-size: ${isMobl ? 15 : 13}px;
+    line-height: ${isMobl ? 20 : 17}px;
   `,
   Text16 = styled(Text14)`
-    font-size: 16px;
-    line-height: 22px;
+    font-size: ${isMobl ? 16 : 14}px;
+    line-height: ${isMobl ? 22 : 19}px;
   `,
   Text18 = styled(Text14)`
-    font-size: 18px;
-    line-height: 23px;
+    font-size: ${isMobl ? 18 : 15.5}px;
+    line-height: ${isMobl ? 23 : 20}px;
   `,
   Text21 = styled(Text14)`
-    font-size: 21px;
-    line-height: 26px;
+    font-size: ${isMobl ? 21 : 18}px;
+    line-height: ${isMobl ? 26 : 22.5}px;
   `,
   Text24 = styled(Text14)`
-    font-size: 24px;
-    line-height: 30px;
+    font-size: ${isMobl ? 24 : 20.5}px;
+    line-height: ${isMobl ? 30 : 26}px;
   `,
   Text28 = styled(Text14)`
-    font-size: 28px;
-    line-height: 35px;
+    font-size: ${isMobl ? 28 : 24}px;
+    line-height: ${isMobl ? 35 : 30}px;
   `,
+  // Text14 = styled.Text`
+  //   font-family: "CeraPro-Regular";
+  //   color: black;
+  //   font-size: 14px;
+  //   line-height: 18px;
+  //   flex-shrink: 1;
+  //   text-align-vertical: top;
+  //   /* include-font-padding: false;  // для разных line-height по разному себя ведет  */
+  // `,
+  // Text10 = styled(Text14)`
+  //   font-size: 10px;
+  //   line-height: 13px;
+  // `,
+  // Text11 = styled(Text10)`
+  //   font-size: 11px;
+  // `,
+  // Text12 = styled(Text14)`
+  //   font-size: 12px;
+  //   line-height: 15px;
+  // `,
+  // Text15 = styled(Text14)`
+  //   font-size: 15px;
+  //   line-height: 20px;
+  // `,
+  // Text16 = styled(Text14)`
+  //   font-size: 16px;
+  //   line-height: 22px;
+  // `,
+  // Text18 = styled(Text14)`
+  //   font-size: 18px;
+  //   line-height: 23px;
+  // `,
+  // Text21 = styled(Text14)`
+  //   font-size: 21px;
+  //   line-height: 26px;
+  // `,
+  // Text24 = styled(Text14)`
+  //   font-size: 24px;
+  //   line-height: 30px;
+  // `,
+  // Text28 = styled(Text14)`
+  //   font-size: 28px;
+  //   line-height: 35px;
+  // `,
   Medium10 = styled(Text10)`
     font-family: "CeraPro-Medium";
   `,
@@ -140,43 +175,41 @@ export const Press = Pressable,
   Title = Text24,
   Title2 = Medium21;
 
-export let GrayContainer = styled(SafeAreaView)`
+export let GrayContainer = styled.View`
     flex: 1;
-    width: ${wwidth}px;
+    /* width: ${wwidth}px; */
     /* max-width: ${wwidth}px; */
-    align-self: center;
+    /* align-self: center; */
     background: ${BACKGRAY};
   `,
   Container = styled(GrayContainer)`
     background: white;
   `,
   Body = styled.View`
-    /* flex: 1; */
     flex-shrink: 1;
     background: white;
     padding: 26px 24px 24px;
     border-top-left-radius: 18px;
     border-top-right-radius: 18px;
   `,
-  // PageImage = ({ style, ...r }) => (
-  //   <Image
-  //     {...r}
-  //     style={{
-  //       width: wwidth,
-  //       height: wwidth,
-  //     backgroundColor: BACKGRAY,
-  //       marginBottom: -18,
-  //     overflow: "hidden",
-  //       ...style,
-  //     }}
-  //   />
-  // );
-  PageImage = styled(Image)`
+  PageImage = rstyled.div`
     width: ${wwidth}px;
     height: ${wwidth}px;
     background: ${BACKGRAY};
     margin-bottom: -18px;
     overflow: hidden;
+    /* object-fit: cover; */
+    background-size: cover;
+    background-position: center;
+  `,
+  CardImage = rstyled.div`
+    width: 84px;
+    height: 84px;
+    background: ${BACKGRAY};
+    overflow: hidden;
+    background-size: cover;
+    background-position: center;
+    border-radius: 15px;
   `;
 
 export const BackTouch = ({ color, goBack, ...r }) => {
@@ -232,25 +265,28 @@ let ToastView = styled.View({
   zIndex: 1000,
 });
 
-export const WhiteStatusBar = (
-  <StatusBar barStyle="dark-content" backgroundColor="white" />
-);
-
 export const UserPic = ({ photo: uri, big, small, style: style0, ...r }) => {
   let size = r.size || (big ? 106 : small ? 32 : 84),
-    style = [
-      { width: size, height: size },
+    style = Object.assign(
+      {
+        backgroundColor: r.color || BLUE,
+        backgroundImage: `url(${uri})`,
+        width: size,
+        height: size,
+      },
       small && { borderRadius: 7 },
       r.right ? { marginLeft: 18 } : { marginRight: 18 },
-      { backgroundColor: r.color || BLUE },
-      style0,
-    ];
-  if (uri) return <UserImage source={{ uri }} {...{ style }} />;
+      style0
+    );
+  if (uri) return <CardImage {...{ style }} />;
   else
     return (
       <BlankUser {...{ style }}>
         <BlankUserChar
-          style={[small && { fontSize: 20 }, big && { fontSize: 44 }]}
+          style={[
+            small && { fontSize: isMobl ? 20 : 18 },
+            big && { fontSize: isMobl ? 44 : 40 },
+          ]}
         >
           {r.name ? r.name[0] : "A"}
         </BlankUserChar>
@@ -258,25 +294,7 @@ export const UserPic = ({ photo: uri, big, small, style: style0, ...r }) => {
     );
 };
 
-// export const UserImage = ({ style, ...r }) => (
-//     <Image
-//       {...r}
-//       style={{
-//         width: 84,
-//         height: 84,
-//         borderRadius: 15,
-//         overflow: "hidden",
-//         ...style,
-//       }}
-//     />
-//   ),
-export const UserImage = styled(Image)`
-    width: 84px;
-    height: 84px;
-    border-radius: 15px;
-    overflow: hidden;
-  `,
-  BlankUser = styled.View`
+export const BlankUser = styled.View`
     justify-content: center;
     align-items: center;
     width: 84px;
@@ -286,6 +304,7 @@ export const UserImage = styled(Image)`
   BlankUserChar = styled.Text`
     font-family: "CeraPro-Medium";
     font-size: 32px;
+    font-size: ${isMobl ? 32 : 30}px;
     color: #fff;
     text-transform: capitalize;
   `;
@@ -300,7 +319,7 @@ export const Refresher = ({ update, ...pr }) => {
 
 export const InputComp = (r) => (
   <View>
-    <Caption style={{ marginBottom: !r.multiline ? -2 : 0 }}>
+    <Caption style={{ marginBottom: r.multiline ? 2 : -2 }}>
       {r.caption}
     </Caption>
     <Input ref={r.reff} {...r} />
@@ -335,7 +354,7 @@ export const BlankImgCircle = styled.View`
 `;
 
 export const ShowMore = (pr) =>
-  pr ? (
+  pr.onPress ? (
     <Touch {...pr}>
       <Text14 style={{ color: BLUE, marginTop: 6 }}>{"·  Show more"}</Text14>
     </Touch>
@@ -361,7 +380,7 @@ export const Button = ({ text, ...r }) => (
     {r.children || (
       <ButtonText
         style={[
-          r.big && { fontSize: 21 },
+          r.big && { fontSize: isMobl ? 21 : 18 },
           { color: r.color || (r.transp ? BLUE : "white") },
         ]}
         numberOfLines={1}
@@ -431,7 +450,10 @@ export const QuantButton = ({ text, color, minus, plus, ...pr }) => (
     <Press style={{ padding: (50 - 17) / 2 }} onPress={minus}>
       <MinusIcon {...{ color }} active={minus} />
     </Press>
-    <ButtonText style={{ flex: 1, fontSize: 16 }} numberOfLines={1}>
+    <ButtonText
+      style={{ flex: 1, fontSize: isMobl ? 16 : 14 }}
+      numberOfLines={1}
+    >
       {text}
     </ButtonText>
     <Press onPress={plus} style={{ padding: (50 - 17) / 2 }}>
@@ -456,9 +478,16 @@ export const DropText = styled(Text16)`
   flex: 1;
 `;
 
+export const ZoomView = styled.View`
+  background: ${BACKBLUE};
+  border-radius: 10px;
+  padding: 15px 16px;
+  margin-top: 4px;
+`;
+
 export const ModalBack = styled(Press)`
   flex: 1;
-  background: rgba(0, 0, 0, 0);
+  background: rgba(0, 0, 0, 0.5);
 `;
 
 export const backgroundComponent = (pr) => <BackView {...pr} />;
@@ -527,16 +556,14 @@ export const WalletIcon = (pr) => (
 export const AbsLoader = ({ style }) => (
   <Loader
     big
-    style={[
-      {
-        position: "absolute",
-        height: wheight,
-        zindex: 11,
-        elevation: 11,
-        backgroundColor: "rgba(255, 255, 255, 0.75)",
-      },
-      style,
-    ]}
+    style={{
+      ...StyleSheet.absoluteFill,
+      position: "absolute",
+      height: wheight,
+      zindex: 11,
+      backgroundColor: "rgba(255, 255, 255, 0.75)",
+      ...style,
+    }}
   />
 );
 
@@ -659,21 +686,58 @@ export const IconDown = ({ size, color, style }) => (
   />
 );
 
-export const SettingsIcon = ({ size, ...r }) => (
-  // <Entypo  name="dots-three-horizontal"  size={size || 22}color={DGRAY}  {...rest}/>
-  <Medium28 style={{ lineHeight: 4, marginTop: -16, ...r }}>...</Medium28>
+export const SettingsIcon = (pr) => (
+  <Entypo name="dots-three-horizontal" size={22} color={DGRAY} {...pr} />
+  //<Medium28 style={{ lineHeight: 4, marginTop: -16, ...r }}>...</Medium28>
 );
 
 export const CloseIcon = ({ size, color, ...r }) => (
   <Press {...r}>
-    <AntDesign
-      name="close"
-      size={size || 34}
-      color={color || LINEGRAY}
-      style={[{ marginHorizontal: -2 }, color == "white" && shadow4]}
-    />
+    <AntDesign name="close" size={size || 34} color={color || LINEGRAY} />
   </Press>
 );
+
+export const TitleNCloseRow = ({ title, style }) => {
+  if (isDesktop && !title) return null;
+  const { goBack } = useNavigation();
+  return (
+    <RowBetween
+      style={{
+        marginRight: isDesktop ? 0 : -24,
+        paddingVertical: isDesktop ? 24 : 0,
+        ...style,
+      }}
+    >
+      <PageTitle>{title || ""}</PageTitle>
+      {!isDesktop && (
+        <CloseIcon onPress={goBack} style={{ padding: 24, marginTop: -2 }} />
+      )}
+    </RowBetween>
+  );
+};
+
+export const CloseButtonStyle = (left) => ({
+  position: "absolute",
+  top: 24,
+  left: left ? 24 : undefined,
+  right: !left ? 24 : undefined,
+  backgroundColor: "white",
+  width: 52,
+  height: 52,
+  borderRadius: 26,
+  justifyContent: "center",
+  alignItems: "center",
+  backgroundColor: "white",
+  zIndex: 1,
+  ...shadow4,
+});
+
+export let ModalCloseButton = () => {
+  const { goBack } = useNavigation();
+  return isDesktop ? null : (
+    <CloseIcon onPress={goBack} size={26} style={CloseButtonStyle()} />
+  );
+};
 
 export const RemoveIcon = ({ onPress, style, height, ...pr }) => (
   <Press {...{ onPress, style }}>
@@ -907,24 +971,21 @@ export const YoutbIcon = ({ red }) => (
 // ШАБЛОНЫ
 // box-shadow: x-offset y-offset blur-radius spread-radius color | inset
 export const shadow2 = {
-    shadowOffset: { height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    // shadowOffset: { height: 2 },
+    // shadowOpacity: 0.1,
+    // shadowRadius: 2,
     boxShadow: "0 2px 2px rgba(0,0,0,0.1)",
   },
   shadow4 = {
-    shadowOffset: { height: 4 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4,
+    // shadowOffset: { height: 4 },
+    // shadowOpacity: 0.12,
+    // shadowRadius: 8,
     boxShadow: "0 4px 8px rgba(0,0,0,0.12)",
   },
   shadow16 = {
-    shadowOpacity: 0.16,
-    shadowOffset: { height: 8 },
-    shadowRadius: 16,
-    elevation: 5,
+    // shadowOpacity: 0.16,
+    // shadowOffset: { height: 8 },
+    // shadowRadius: 16,
     boxShadow: "0 8px 16px rgba(0,0,0,0.16)",
   };
 
@@ -939,7 +1000,6 @@ export const BlankView = styled.View`
   BlankText = styled(Text16)`
     text-align: center;
     color: ${GRAY};
-    /* margin: 24px; */
   `;
 
 export const smileIcon = {
@@ -978,53 +1038,46 @@ const GoogleIcon = (props) => (
   </svg>
 );
 
-export const HomeIcon = ({ foc, ...props }) => (
-  <svg
-    width={26}
-    height={21}
-    viewBox="0 0 26 21"
-    fill="none"
-    xmlns="http://www.w3.org/2000/svg"
-    {...props}
-  >
-    <path
-      d="M0 20.909v-3.83a7.613 7.613 0 012.258-5.402A7.733 7.733 0 017.702 9.44c2.042 0 4 .805 5.444 2.237a7.613 7.613 0 012.258 5.401v3.83H0z"
-      fill={foc ? BLUE : "#CDCDCD"}
-    />
-    <path
-      d="M13.206 5.507a5.507 5.507 0 11-11.013 0 5.507 5.507 0 0111.013 0z"
-      fill="#EFEFEF"
-    />
-    <path
-      d="M17.307 21h7.867v-5.319a6.22 6.22 0 00-1.845-4.413A6.318 6.318 0 0018.88 9.44a6.319 6.319 0 00-4.425 1.805 7.862 7.862 0 012.852 6.054V21z"
-      fill={foc ? BLUE : "#CDCDCD"}
-    />
-    <path d="M23.378 6.073a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0z" fill="#EFEFEF" />
-  </svg>
-);
+export const GroupsIcon = ({ foc, ...props }) => {
+  let fill = foc ? BLUE : "#CDCDCD";
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={30}
+      height={30}
+      fill="none"
+      {...props}
+    >
+      <rect width={30} height={24.444} fill="#F4F4F4" rx={3} />
+      <circle cx={7.778} cy={10} r={5.556} {...{ fill }} />
+      <circle cx={22.222} cy={10} r={5.556} {...{ fill }} />
+      <circle cx={7.778} cy={24.445} r={5.556} {...{ fill }} />
+      <circle cx={22.222} cy={24.445} r={5.556} {...{ fill }} />
+    </svg>
+  );
+};
 
 export const UserIcon = ({ foc, ...props }) => (
   <svg
-    width={17}
-    height={22}
-    viewBox="0 0 17 22"
-    fill="none"
     xmlns="http://www.w3.org/2000/svg"
+    width={23}
+    height={30}
+    fill="none"
     {...props}
   >
     <path
-      d="M0 22v-4.03a8.01 8.01 0 012.375-5.683 8.136 8.136 0 015.729-2.354c2.149 0 4.209.847 5.729 2.354a8.01 8.01 0 012.375 5.682V22H0z"
+      d="M0 30v-5.497a10.923 10.923 0 0 1 3.24-7.75 11.095 11.095 0 0 1 7.811-3.209c2.93 0 5.74 1.155 7.812 3.21a10.923 10.923 0 0 1 3.239 7.749V30H0Z"
       fill={foc ? BLUE : "#CDCDCD"}
     />
     <path
-      d="M13.896 5.794a5.794 5.794 0 11-11.589 0 5.794 5.794 0 0111.589 0z"
       fill="#EFEFEF"
+      d="M18.948 7.901a7.901 7.901 0 1 1-15.802 0 7.901 7.901 0 0 1 15.802 0Z"
     />
   </svg>
 );
 
 export const LOGO = () => (
-  <Touch onPress={() => window.open("https://bloss.am/")}>
+  <Press onPress={() => window.open("https://bloss.am/")}>
     <svg
       width={129}
       height={30}
@@ -1041,5 +1094,54 @@ export const LOGO = () => (
         fill={BLUE}
       />
     </svg>
-  </Touch>
+  </Press>
+);
+
+export const GooglePlayIcon = (pr) => (
+  <svg
+    width="81"
+    height="85"
+    viewBox="0 0 81 85"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    // scale={0.5}
+    {...pr}
+  >
+    <path
+      d="M58.7926 25.5572L13.0358 1.06037C10.658 -0.212561 8.07972 -0.277615 5.84814 0.535989L44.8309 39.5188L58.7926 25.5572Z"
+      fill="white"
+    />
+    <path
+      d="M75.8563 34.6926L62.6761 27.6364L47.8124 42.4999L62.6761 57.3636L75.8561 50.3072C82.091 46.9694 82.091 38.0304 75.8563 34.6926Z"
+      fill="white"
+    />
+    <path
+      d="M2.27929 2.92944C0.881232 4.46602 0 6.51737 0 8.86772V76.1322C0 78.4825 0.881232 80.534 2.27912 82.0706L41.8498 42.4999L2.27929 2.92944Z"
+      fill="white"
+    />
+    <path
+      d="M5.84814 84.464C8.07955 85.2774 10.658 85.2127 13.0358 83.9396L58.7926 59.4427L44.8311 45.4812L5.84814 84.464Z"
+      fill="white"
+    />
+  </svg>
+);
+
+export const AppleIcon = (pr) => (
+  <svg
+    width="83"
+    height="100"
+    viewBox="0 0 83 100"
+    fill="none"
+    xmlns="http://www.w3.org/2000/svg"
+    {...pr}
+  >
+    <path
+      d="M60.4769 9.45834C59.5181 12.4011 57.9666 15.1285 56.0967 17.397V17.4011C54.21 19.6825 51.6898 21.6997 48.8862 23.0371C46.313 24.2645 43.4924 24.9255 40.6856 24.7067L39.8266 24.6397L39.7135 23.7844C39.3489 21.0261 39.77 18.2337 40.6568 15.6497C41.6888 12.6426 43.3605 9.89887 45.1543 7.8198L45.154 7.81949C47.0102 5.64506 49.4995 3.75317 52.1654 2.38239C54.8403 1.0069 57.7131 0.146802 60.3278 0.0402744L61.3162 0L61.4246 0.987434C61.7412 3.87532 61.3561 6.76002 60.4769 9.45834Z"
+      fill="white"
+    />
+    <path
+      d="M78.6497 35.4013C77.7022 35.9876 68.5437 41.6546 68.6572 53.0775C68.777 66.8484 80.4535 71.6221 81.098 71.8855H81.1022L81.13 71.8971L82.0462 72.2764L81.7324 73.2139C81.7138 73.2695 81.7349 73.2104 81.7077 73.2976C81.4098 74.2521 79.3901 80.7225 74.8276 87.3896C72.7573 90.4138 70.648 93.4334 68.1575 95.7626C65.5788 98.1742 62.6339 99.8021 58.9958 99.8697C55.5668 99.9341 53.3219 98.9627 50.9882 97.953C48.763 96.9901 46.4488 95.9887 42.8274 95.9887C39.0232 95.9887 36.5914 97.0247 34.2491 98.0226C32.0442 98.9619 29.9118 99.8704 26.8397 99.9929H26.8355C23.2882 100.125 20.2121 98.3954 17.4784 95.8342C14.8629 93.3839 12.5714 90.1752 10.4833 87.1549C5.76959 80.3487 1.6702 70.4455 0.403665 60.3757C-0.638093 52.0928 0.232683 43.6787 4.23722 36.7297C6.47273 32.8417 9.59715 29.6687 13.2501 27.4546C16.8864 25.2508 21.0467 23.9966 25.3771 23.9316V23.9316C29.1685 23.8628 32.7433 25.2815 35.8713 26.5228C38.0851 27.4012 40.0574 28.184 41.5361 28.184C42.8424 28.184 44.768 27.4248 47.0126 26.5398C50.8037 25.0452 55.4417 23.2168 60.346 23.7044C62.4055 23.794 66.6954 24.2873 71.0805 26.6638C73.874 28.1778 76.7075 30.4508 79.0367 33.8597L79.6509 34.7586L78.7335 35.351C78.6844 35.3828 78.7321 35.3504 78.6497 35.4013Z"
+      fill="white"
+    />
+  </svg>
 );

@@ -1,22 +1,24 @@
 import React, { useContext, useEffect } from "react";
 import { makeAutoObservable, runInAction } from "mobx";
 import { query, getDocs, where, doc, getDoc } from "firebase/firestore";
+import { ref, set, get } from "firebase/database";
 import orderBy from "lodash/orderBy";
 import {
   db,
   dbCoaches,
   dbEvents,
-  dbProgs,
+  rdbProgs,
   dbQueryToObj,
   getDay,
   getFreeSlots,
   loccoaches,
   locevents,
   locprogs,
+  rdb,
 } from "./utils";
+import AuthStore from "./AuthStore";
 import CartStore from "./CartStore";
 import ClientStore from "./ClientStore";
-import AuthStore from "./AuthStore";
 
 let dbGroupsRef = query(
   dbEvents,
@@ -42,7 +44,7 @@ export const StoresProvider = ({ children }) => {
     cart = new CartStore(school);
 
   useEffect(() => {
-    //  school.getSchool();
+    // school.getSchool();
   }, []);
 
   return (
@@ -54,10 +56,10 @@ export const StoresProvider = ({ children }) => {
 
 class SchoolStore {
   // allPrograms = {};
-  // coaches = {}  ;
+  // coaches = {};
   allPrograms = locprogs;
   coaches = loccoaches;
-  groups = locevents; // null;
+  groups = null;
   filter = {};
 
   constructor() {
@@ -110,11 +112,11 @@ class SchoolStore {
   }
 
   setGroups = (obj = {}) => {
-    if (Object.keys(obj)[0] && Object.values(obj).some((e) => !e.day)) {
-      Object.values(obj)
+    let arr = Object.values(obj);
+    if (arr[0] && arr.some((e) => !e.day))
+      arr
         .filter((e) => !e.day)
         .forEach((e) => (obj[e.id].day = getDay(e.from)));
-    }
     return (this.groups = { ...this.groups, ...obj });
   };
 
@@ -127,15 +129,17 @@ class SchoolStore {
 
   setFilter = (obj) => (this.filter = obj);
 
+  getProgs = async () =>
+    get(rdbProgs).then((res) =>
+      runInAction(() => (this.allPrograms = res.val()))
+    );
+
   getSchool = async () =>
     await Promise.all([
       getDocs(query(dbCoaches, where("status", "==", "approved"))),
-      getDocs(dbProgs),
+      this.getProgs(),
     ])
-      .then((res) => {
-        let [ob1, ob2] = res.map((q) => dbQueryToObj(q));
-        runInAction(() => ((this.coaches = ob1), (this.allPrograms = ob2)));
-      })
+      .then((res) => runInAction(() => (this.coaches = dbQueryToObj(res[0]))))
       .catch((er) => console.log("ERROR getSchool", er));
 
   getAllGroups = async () =>
@@ -147,7 +151,7 @@ class SchoolStore {
   getCoach = async (id, next) =>
     await getDoc(doc(db, "coaches", id))
       .then((d) => {
-        if (d?.exists)
+        if (d?.exists())
           runInAction(
             () => (this.coaches[id] = { ...this.coaches[id], ...d.data() })
           );

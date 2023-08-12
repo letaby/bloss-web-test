@@ -26,37 +26,41 @@ export default observer((pr) => {
       tmzn != profile.timezone && (upd.timezone = tmzn);
       tmzName != profile.timezoneName && (upd.timezoneName = tmzName);
       device != profile.device && (upd.device = device);
-      // Object.keys(upd)[0] && updateFields(upd);
+      Object.keys(upd)[0] && updateFields(upd);
     }
   }, [isactive]);
 
   // //  bookings listener
   useEffect(() => {
     if (isactive && !initLoad) {
-      // const unsubscribe = onSnapshot(dbBooks(myid), handleBooksListener);
-      // const listenOrder = onSnapshot(
-      //   query(
-      //     dbOrders,
-      //     where("client", "==", myid),
-      //     orderBy("created", "desc"),
-      //     limit(1)
-      //   ),
-      //   (q) => !q.empty && updateOrder(q.docs[0].data())
-      // );
-      // return () => (unsubscribe(), listenOrder());
+      const unsubscribe = onSnapshot(dbBooks(myid), handleBooksListener);
+      const listenOrder = onSnapshot(
+        query(
+          dbOrders,
+          where("client", "==", myid),
+          orderBy("created", "desc"),
+          limit(1)
+        ),
+        (q) => !q.empty && updateOrder(q.docs[0].data())
+      );
+      return () => (unsubscribe(), listenOrder());
     }
   }, [isactive && !initLoad]);
 
   // user balance listener
   useEffect(() => {
     if (isactive && !clientLoad) {
-      // const listener = onSnapshot(doc(db, "users", myid), (d) => {
-      //   let { balance } = d.data();
-      //   if (Object.keys(balance || {})[0]) localUpdateFields({ balance });
-      // });
-      // return () => listener();
+      const listener = onSnapshot(doc(db, "users", myid), (d) => {
+        let { balance } = d.data();
+        if (
+          Object.keys(balance || {}).length !=
+          Object.keys(profile.balance || {}).length
+        )
+          localUpdateFields({ balance });
+      });
+      return () => listener();
     }
   }, [isactive && !clientLoad]);
 
-  return <>{pr.children}</>;
+  return pr.children;
 });
