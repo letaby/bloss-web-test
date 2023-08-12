@@ -3,9 +3,16 @@ import { FlatList, ScrollView, View } from "react-native";
 import styled from "styled-components/native";
 import { observer } from "mobx-react-lite";
 import useStore from "../commons/Stores";
-import { getRate, paddTop, wwidth } from "../commons/utils";
 import {
-  GRAY,
+  getRate,
+  isDesktop,
+  modalWidth,
+  screenWidth,
+  tabbarHeight,
+  wheight,
+  wwidth,
+} from "../commons/utils";
+import {
   DGRAY,
   Row,
   RowCentered,
@@ -14,7 +21,6 @@ import {
   EventIcon,
   Text21,
   PageTitle as Title,
-  Container,
   ShowMore,
   Press,
   PageImage,
@@ -22,23 +28,24 @@ import {
   Loader,
   Text12,
   BLUE,
-  BACKGRAY,
   Button,
   Refresher,
-  CloseIcon,
-  BackIcon,
+  Container,
+  GrayContainer,
+  ModalCloseButton,
 } from "../commons/UI";
 import Program, { width as progWidth } from "../comp/ProgramCard";
 import CoachGroups from "../comp/CoachGroups";
 import CoachPrivats, { Desc } from "../comp/CoachPrivats";
 import { StatsComp } from "../comp/ProfileHeader";
 
-export default observer(
+const Coach = observer(
   ({
-    navigation: { navigate, goBack, push },
+    navigation: { navigate },
     route: {
-      params: { coachID, modal, offset },
+      params: { coachID, offset },
     },
+    modal,
   }) => {
     const {
         school: {
@@ -52,16 +59,17 @@ export default observer(
       rate = getRate(c.rates),
       cart = getCart(coachID),
       scrollref = useRef(),
-      scrollOffset = offset && { y: wwidth + 540 };
+      scrollOffset = offset && { y: wheight + 540 };
 
     useEffect(() => {
       if (!coach) getCoach(coachID);
     }, []);
 
     useEffect(() => {
-      if (scrollref.current && offset)
-        scrollref.current.scrollTo(scrollOffset), console.log("offser");
-    }, [scrollref.current && offset]);
+      if (offset)
+        //scrollref.current.scrollTo(600)
+        scrollref.current.scrollTo(0, 600);
+    }, [scrollref.current, offset]);
 
     if (!coach) return <Loader big />;
 
@@ -69,61 +77,99 @@ export default observer(
       <Program {...{ ...programs[id], navigate }} key={id} />
     );
 
+    const rowView = isDesktop && !modal;
+
+    const bodyWidth =
+      rowView &&
+      (screenWidth < 700
+        ? screenWidth * 0.67
+        : screenWidth < 1000
+        ? screenWidth * 0.6
+        : screenWidth < 1200
+        ? screenWidth - wwidth
+        : screenWidth - modalWidth);
+
+    const Wrap = (pr) =>
+      rowView ? (
+        <Row style={{ flex: 1 }}>
+          <PageImage
+            style={{
+              width: screenWidth - bodyWidth,
+              height: wheight - tabbarHeight,
+              backgroundImage: `url(${uri})`,
+            }}
+            onClick={() => navigate("Image", { uri })}
+          />
+          <Container>{pr.children}</Container>
+        </Row>
+      ) : (
+        <GrayContainer>
+          {modal && !isDesktop && <ModalCloseButton />}
+          {pr.children}
+        </GrayContainer>
+      );
+
     return (
-      <Container>
-        <BackIconComp {...{ goBack, modal }} />
+      <Wrap>
         <ScrollView
           ref={scrollref}
           contentContainerStyle={{ flexGrow: 1 }}
           contentOffset={offset ? scrollOffset : undefined}
           refreshControl={modal ? undefined : <Refresh {...{ coachID }} />}
-          style={{ width: wwidth }}
+          // style={{            width: wwidth,          }}
         >
-          {uri && (
-            <Press onPress={() => push("Image", { uri })}>
-              <PageImage source={{ uri }} />
-              {console.log("photo", uri)}
-            </Press>
+          {!rowView && (
+            <PageImage
+              style={{ height: wwidth, backgroundImage: `url(${uri})` }}
+              onClick={() => navigate("Image", { uri })}
+            />
           )}
-          <Body
-            style={[
-              { flex: 1, paddingBottom: 44 },
-              !uri && { paddingTop: 60 + (paddTop || 20) },
-            ]}
-          >
-            <Row style={{ justifyContent: "center" }}>
-              <Name selectable>{c.name || "Coach " + coachID}</Name>
-            </Row>
-            {bio && (
-              <>
-                <Desc numberOfLines={2} selectable>
-                  {bio}
-                </Desc>
-                <ShowMore onPress={() => navigate("AddInfo", { coachID })} />
-              </>
-            )}
+          <Body>
+            <View
+              style={
+                rowView && {
+                  paddingRight: bodyWidth > 500 ? bodyWidth - 500 : 0,
+                }
+              }
+            >
+              <Name
+                style={{ textAlign: rowView ? "left" : "center" }}
+                selectable
+              >
+                {c.name || "Coach " + coachID}
+              </Name>
 
-            <RowCentered style={{ marginVertical: 30 }}>
-              <StatsComp
-                row={!rate}
-                num1={c.expCoach || 4}
-                cap1={"years"}
-                desc1={"Coach\nexperience"}
-                num2={c.expAthl || 7}
-                cap2={"years"}
-                desc2={"Athlete\nexperience"}
-                colored
-                style={{ flexGrow: 3 }}
-              />
-              {rate && (
-                <Row style={{ flexGrow: 1 }}>
-                  <RateCircle>
-                    <RateText>{rate}</RateText>
-                    <RateCap>Rating</RateCap>
-                  </RateCircle>
-                </Row>
+              {bio && (
+                <Touch onPress={() => navigate("AddInfo", { coachID })}>
+                  <Desc numberOfLines={isDesktop ? 3 : 2} selectable>
+                    {bio}
+                  </Desc>
+                  <ShowMore />
+                </Touch>
               )}
-            </RowCentered>
+
+              <RowCentered style={{ marginVertical: 30 }}>
+                <StatsComp
+                  row={!rate}
+                  num1={c.expCoach || 4}
+                  cap1={"years"}
+                  desc1={"Coach\nexperience"}
+                  num2={c.expAthl || 7}
+                  cap2={"years"}
+                  desc2={"Athlete\nexperience"}
+                  colored
+                  style={{ flexGrow: 3 }}
+                />
+                {rate && (
+                  <Row style={{ flexGrow: 1 }}>
+                    <RateCircle>
+                      <RateText>{rate}</RateText>
+                      <RateCap>Rating</RateCap>
+                    </RateCircle>
+                  </Row>
+                )}
+              </RowCentered>
+            </View>
 
             <Title>Programs</Title>
             <FlatList
@@ -136,33 +182,42 @@ export default observer(
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={{
                 paddingHorizontal: 24,
-                paddingTop: 20,
+                paddingVertical: 20,
               }}
               style={{ marginHorizontal: -24 }}
             />
+
             {modal && (
               <Button
                 big
                 text="Coach classes"
                 onPress={() => navigate("Coach", { coachID, offset: true })}
-                style={{ marginTop: 48, marginBottom: cart[0] ? 60 : 0 }}
+                style={{ marginTop: 24, marginBottom: cart[0] ? 80 : 16 }}
               />
             )}
           </Body>
+
           {!modal && (
             <>
               <CoachGroups
                 incartIds={cart.filter((e) => !e.privat).map((e) => e.id)}
                 {...{ coachID, navigate }}
+                style={{
+                  paddingRight: bodyWidth > 450 ? bodyWidth - 450 : 24,
+                }}
               />
               <CoachPrivats
                 incarts={cart.filter((e) => e.privat)}
-                style={{ paddingBottom: cart[0] ? 60 + 24 + 32 : 56 }}
+                style={{
+                  paddingBottom: cart[0] && !isDesktop ? 60 + 24 + 32 : 56,
+                  paddingRight: bodyWidth > 450 ? bodyWidth - 450 : 24,
+                }}
                 {...{ coachID, navigate }}
               />
             </>
           )}
         </ScrollView>
+
         {!!cart[0] && (
           <Touch onPress={() => navigate("Cart", { coachID })} ao={0.8}>
             <CartView style={shadow4}>
@@ -173,10 +228,14 @@ export default observer(
             </CartView>
           </Touch>
         )}
-      </Container>
+      </Wrap>
     );
   }
 );
+
+export default Coach;
+
+export const CoachModal = (pr) => <Coach {...pr} modal />;
 
 let Refresh = observer(({ coachID, ...pr }) => {
   const {
@@ -199,31 +258,6 @@ let progsKeys = (id) => id,
     offset: (progWidth + 15) * i,
     index: i,
   });
-
-let BackIconComp = ({ goBack, modal }) => {
-  let style = {
-    position: "absolute",
-    top: 24,
-    left: modal ? undefined : 24,
-    right: modal ? 24 : undefined,
-    backgroundColor: "white",
-    width: 52,
-    height: 52,
-    borderRadius: 33,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "white",
-    zIndex: 1,
-    ...shadow4,
-  };
-  return modal ? (
-    <CloseIcon size={26} onPress={goBack} {...{ style }} />
-  ) : (
-    <Press onPress={goBack} {...{ style }}>
-      <BackIcon />
-    </Press>
-  );
-};
 
 let Name = styled(Title)`
     text-align: center;

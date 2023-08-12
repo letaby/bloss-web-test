@@ -1,8 +1,10 @@
 import React, { useState } from "react";
+import styled from "styled-components/native";
 import { observer } from "mobx-react-lite";
 import useStore from "../commons/Stores";
-import { Button, QuantButton, Container } from "../commons/UI";
+import { Button, QuantButton } from "../commons/UI";
 import BottomSheet from "../comp/BottomSheet";
+import { modalWidth } from "../commons/utils";
 
 export default observer(
   ({
@@ -29,7 +31,7 @@ export default observer(
 
     return (
       <BottomSheet height={28 + 50 + 22 + 65 + 36} {...{ goBack }}>
-        <Container style={{ padding: 24, paddingTop: 28 }}>
+        <Body>
           <QuantButton
             text={"Persons: " + quant}
             plus={() => setQuant((pr) => pr + 1)}
@@ -41,8 +43,14 @@ export default observer(
             onPress={save}
             style={{ marginTop: 22 }}
           />
-        </Container>
+        </Body>
       </BottomSheet>
     );
   }
 );
+
+let Body = styled.View`
+  flex: 1;
+  justify-content: center;
+  padding: 28px 24px 24px;
+`;

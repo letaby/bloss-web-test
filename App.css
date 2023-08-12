@@ -1,0 +1,43 @@
+:root {
+  --toastify-font-family: "CeraPro-Regular";
+}
+
+/* .react-confirm-alert {
+  max-width: 90%;
+  margin: 0 24px;
+} */
+
+#zoomContainer {
+  transform: scale(1);
+  transform-origin: top left;
+}
+
+.react-confirm-alert-body {
+  font-family: "CeraPro-Regular";
+  max-width: 80vw;
+  margin: 0 32px;
+  padding: 20px;
+}
+
+.react-confirm-alert-button-group > button {
+  font-family: "CeraPro-Regular";
+  font-size: 16px;
+}
+
+.react-confirm-alert-body > h1 {
+  font-size: 24px;
+}
+
+body {
+  background-color: #f4f4f4;
+}
+
+[data-rsbs-header] {
+  padding: 0 !important;
+}
+
+[data-rsbs-header]:before {
+  width: 44px;
+  top: calc(-14px + env(safe-area-inset-top));
+  background-color: white;
+}

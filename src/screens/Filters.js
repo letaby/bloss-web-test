@@ -3,9 +3,8 @@ import { ScrollView, View } from "react-native";
 import styled from "styled-components/native";
 import { observer } from "mobx-react-lite";
 import { useSchool } from "../commons/Stores.js";
-import { ages, wwidth } from "../commons/utils";
+import { ages, wheight } from "../commons/utils";
 import {
-  CloseIcon,
   DGRAY,
   CheckboxIcon,
   RowCentered,
@@ -14,7 +13,6 @@ import {
   PageTitle,
   Text18,
   Text24,
-  Container,
   Press,
   Medium18,
   LITEBORDER,
@@ -26,17 +24,12 @@ import {
 import BottomSheet from "../comp/BottomSheet.js";
 
 export default observer(
-  ({
-    navigation: { navigate, goBack },
-    route: {
-      params: { coachID, from, ...p },
-    },
-  }) => {
-    console.log("Filters", wwidth);
-    const bothFilters = ["Groups", "Coach"].includes(from); //only from Groups screen,
+  ({ navigation: { navigate, goBack }, route: { params: p } }) => {
+    const { coachID, from } = p || {},
+      bothFilters = ["Home", "Coach"].includes(from);
 
     if (bothFilters) {
-      const global = from == "Groups",
+      const global = from == "Home",
         {
           programs,
           filter,
@@ -85,19 +78,13 @@ export default observer(
       };
 
       return (
-        <Container>
-          <CloseIcon
-            onPress={goBack}
-            style={{ alignSelf: "flex-end", padding: 20, marginBottom: -8 }}
-          />
+        <BottomSheet snaps={[wheight * 0.94, wheight * 0.95]} {...{ goBack }}>
           <ScrollView
             contentContainerStyle={{
               flexGrow: 1,
               padding: 24,
-              paddingTop: 0,
               paddingBottom: 100,
             }}
-            style={{ width: wwidth }}
             showsVerticalScrollIndicator={false}
           >
             {[progs, ages].map(renderGroups)}
@@ -105,7 +92,7 @@ export default observer(
           <FloatButton onPress={save} style={shadow4}>
             <CheckboxIcon active size={32} />
           </FloatButton>
-        </Container>
+        </BottomSheet>
       );
     }
 
@@ -142,7 +129,7 @@ export default observer(
       };
 
       return (
-        <BottomSheet {...{ goBack }}>
+        <BottomSheet scroll {...{ goBack }}>
           <View style={{ paddingHorizontal: 24 }}>
             <PageTitle style={{ marginTop: 32, marginBottom: 24 }}>
               Programs

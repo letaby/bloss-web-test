@@ -1,22 +1,23 @@
 import React, { useCallback, useEffect } from "react";
-import { View, ScrollView, FlatList, Linking } from "react-native";
+import { View, ScrollView, FlatList, Image } from "react-native";
 import styled from "styled-components/native";
 import { observer } from "mobx-react-lite";
 import { getDocs } from "firebase/firestore";
 import dayjs from "dayjs";
 import useStore, { useClient } from "../commons/Stores";
-import { dbBooks, wwidth, resetStackRoute, dayAgo } from "../commons/utils";
+import {
+  dbBooks,
+  wwidth,
+  resetStackRoute,
+  dayAgo,
+  deskPadding,
+} from "../commons/utils";
 import {
   GrayContainer,
   Touch,
   Loader,
   Text28,
   DGRAY,
-  BACKGRAY,
-  RowCentered,
-  InstaIcon,
-  FacbkIcon,
-  YoutbIcon,
   Refresher,
   BlankText,
   GRAY,
@@ -28,11 +29,10 @@ import {
   Text14,
   Text18,
   Text12,
-  BlankView,
 } from "../commons/UI";
 import Header from "../comp/ProfileHeader";
 import BookCard from "../comp/BookCard";
-import { Legals } from "./Login";
+import { AppPromo, Legals, rowView } from "./Login";
 
 export default observer(
   ({ navigation: { navigate }, route: { params: p } }) => {
@@ -63,9 +63,9 @@ export default observer(
           contentContainerStyle={{
             flexGrow: 1,
             padding: 24,
+            paddingHorizontal: deskPadding || 24,
             paddingBottom: 16,
           }}
-          style={{ width: wwidth }}
         >
           <Header {...{ navigate }} />
           {load && <Loader big />}
@@ -73,20 +73,13 @@ export default observer(
             <>
               <BooksComp {...{ navigate }} />
               <OrderCard {...{ navigate }} />
-              <BlankView style={{ marginTop: 20, minHeight: 80 }}>
-                <BlankText>
-                  Get a mobile app to sync bookings with your calendar, view
-                  your classes & orders history and coaches' comments on your
-                  progress!
-                </BlankText>
-              </BlankView>
+              <View style={{ flex: 1, minHeight: 8 }} />
+              <Legals {...{ myid }} />
+              {!rowView && <AppPromo />}
             </>
           )}
-          {/* <RowCentered style={{ marginVertical: 24 }}>
-            {[1, 2, 3].map(SocIcon)}
-          </RowCentered> */}
-          <Legals {...{ myid }} />
         </ScrollView>
+        {rowView && <AppPromo />}
       </GrayContainer>
     );
   }
@@ -128,8 +121,8 @@ let BooksComp = observer(({ navigate }) => {
             {...{ keyExtractor, ItemSeparatorComponent, getItemLayout }}
             initialNumToRender={1}
             windowSize={5}
-            contentContainerStyle={{ paddingHorizontal: 24 }}
-            style={{ marginHorizontal: -24 }}
+            contentContainerStyle={{ paddingHorizontal: deskPadding + 24 }}
+            style={{ marginHorizontal: -24 - deskPadding }}
             showsHorizontalScrollIndicator={false}
           />
         </View>
@@ -209,24 +202,6 @@ let getItemLayout = (_, i) => ({
   offset: (bookWidth + 16) * i,
   index: i,
 });
-
-let SocIcon = (c, i) => (
-  <Touch
-    key={String(i)}
-    onPress={() =>
-      Linking.openURL(
-        i == 0
-          ? "https://www.instagram.com/bloss.am.club/"
-          : i == 1
-          ? "https://www.facebook.com/rhythmicgymnasticsonline/"
-          : "https://www.youtube.com/channel/UCcjjswwHfOuAnwFiPX0MFPw"
-      )
-    }
-    style={{ marginRight: 24 }}
-  >
-    {i == 0 ? <InstaIcon /> : i == 1 ? <FacbkIcon /> : <YoutbIcon />}
-  </Touch>
-);
 
 let keyExtractor = (e) => e.id;
 
