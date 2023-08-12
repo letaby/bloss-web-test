@@ -1,30 +1,23 @@
 import React, { useCallback, useRef } from "react";
-import { ScrollView } from "react-native";
+import { ScrollView, View } from "react-native";
 // import Sheet from "react-modal-sheet";
 import { BottomSheet } from "react-spring-bottom-sheet";
 import "react-spring-bottom-sheet/dist/style.css";
-import { isDesktop, wheight, wwidth } from "../commons/utils";
-import { CloseIcon, Container, ModalBack, Press } from "../commons/UI";
+import { isDesktop, wheight } from "../commons/utils";
+import { Container } from "../commons/UI";
 
 export default ({ height = wheight * 0.9, snaps = [height], goBack, ...r }) => {
-  if (isDesktop)
-    return (
-      <Container>
-        <CloseIcon
-          onPress={goBack}
-          style={{ alignSelf: "flex-end", padding: 20, marginBottom: -8 }}
-        />
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
-          style={{ width: wwidth }}
-        >
-          {r.children}
-        </ScrollView>
-      </Container>
-    );
+  if (isDesktop) {
+    if (r.scroll)
+      return (
+        <Container>
+          <ScrollView contentContainerStyle={{ flexGrow: 1 }} {...r} />
+        </Container>
+      );
+    return <Container {...r} />;
+  }
 
-  const sheetRef = useRef(),
-    dismissed = useRef(false);
+  const dismissed = useRef(false);
 
   const onDismiss = useCallback(
     () => !dismissed.current && ((dismissed.current = true), goBack()),
@@ -32,22 +25,26 @@ export default ({ height = wheight * 0.9, snaps = [height], goBack, ...r }) => {
   );
 
   return (
-    <ModalBack onPress={onDismiss}>
-      <BottomSheet
-        ref={sheetRef}
-        open
-        draggable
-        expandOnContentDrag={snaps[1]}
-        defaultSnap={() => snaps[0] || height}
-        snapPoints={() => snaps || [height / 3, height]}
-        {...{ onDismiss }}
-        // skipInitialTransition
-        // style={{ maxWidth: wwidth }}
+    <BottomSheet
+      open
+      draggable
+      expandOnContentDrag //={!!snaps[1]}
+      skipInitialTransition={!snaps[1]}
+      defaultSnap={() => snaps[0] || height}
+      snapPoints={() => snaps || [height / 3, height]}
+      {...{ onDismiss }}
+    >
+      <div
+        style={{
+          flex: 1,
+          borderTopLeftRadius: 18,
+          borderTopRightRadius: 18,
+          overflow: "hidden",
+        }}
       >
-        {/* Press needs to handle taps on content, otherwise ModalBack & goBack() fires  */}
-        <Press>{r.children}</Press>
-      </BottomSheet>
-    </ModalBack>
+        {r.children}
+      </div>
+    </BottomSheet>
   );
 };
 
@@ -58,10 +55,9 @@ export default ({ height = wheight * 0.9, snaps = [height], goBack, ...r }) => {
       onClose={goBack}
       snapPoints={r.snaps || [height, height * 0.6]}
       initialSnap={2}
-      style={{   maxWidth: wwidth,
-       }}
+      
     >
-      <Sheet.Container //</Sheet>style={{ maxWidth: wwidth }}
+      <Sheet.Container //</Sheet> 
       >
         <Sheet.Content>
           {/* <Sheet.Scroller draggableAt="both">   
