@@ -8,7 +8,7 @@ import {
 } from "firebase/auth";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { db, tmzn, colors, localStor, timezoneName, user } from "./utils";
-import { auth } from "../../config/index2";
+import { auth } from "../../config/index";
 let gProvider = new GoogleAuthProvider(),
   aProvider = new OAuthProvider("apple.com");
 aProvider.addScope("email");

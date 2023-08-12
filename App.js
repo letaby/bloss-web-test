@@ -1,62 +1,56 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { Linking, StyleSheet, View } from "react-native";
 import styled from "styled-components/native";
 import "react-confirm-alert/src/react-confirm-alert.css";
-import "react-toastify/dist/ReactToastify.css";
-import "react-lazy-load-image-component/src/effects/blur.css";
+// import "react-lazy-load-image-component/src/effects/blur.css";
 import { observer } from "mobx-react-lite";
-import { NavigationContainer } from "@react-navigation/native";
+import { NavigationContainer, DefaultTheme } from "@react-navigation/native";
 import { createStackNavigator } from "@react-navigation/stack";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-let Stack = createStackNavigator(),
-  Tab = createBottomTabNavigator();
-import { ToastContainer } from "react-toastify";
+import Toast from "react-native-toast-message";
 import { onAuthStateChanged } from "firebase/auth";
 import { useFonts } from "expo-font";
 import Toast from "react-native-toast-message";
 import dayjs from "dayjs";
 require("dayjs/locale/en");
 dayjs.locale("en");
-import { auth } from "./config/index2.js";
+import { auth } from "./config/index.js";
 import { StoresProvider, useAuth, useClient } from "./src/commons/Stores.js";
 import EffectsProvider from "./src/commons/EffectsProvider.js";
 import { handleGoogleAuthUser } from "./src/commons/AuthStore.js";
 import { rootNavg } from "./src/commons/RootNavigation";
-import { isDesktop, tabbarHeight } from "./src/commons/utils.js";
-import Login from "./src/screens/Login.js";
-import Home from "./src/screens/Home";
-import Coach from "./src/screens/Coach";
-import Private from "./src/screens/Private";
-import Cart from "./src/screens/Cart";
-import Event from "./src/screens/Event";
-import Profile from "./src/screens/Profile";
-import EditProfile from "./src/screens/EditProfile";
-import Balance from "./src/screens/Balance";
-import BalanceStory from "./src/screens/BalanceStory.js";
-import AddInfo from "./src/screens/AddInfo";
-import AddGroup from "./src/screens/AddGroup";
-import Filters from "./src/screens/Filters";
-import Order from "./src/screens/Order";
-import Image from "./src/screens/Image";
+import {
+  isDesktop,
+  tabbarHeight,
+  modalWidth,
+  deskPadding,
+  wwidth,
+} from "./src/commons/utils.js";
+import screens from "./src/screens";
 import {
   BackTouch,
-  LOGO,
   BACKGRAY,
   BLUE,
-  HomeIcon,
-  Text11,
   RED,
   Row,
-  GRAY,
   UserIcon,
   Text24,
-  DGRAY,
+  Press,
+  toastConfig,
+  CloseIcon,
+  GroupsIcon,
+  CloseButtonStyle,
+  BackIcon,
+  Loader,
 } from "./src/commons/UI";
+import "./App.css";
 
-function App() {
-  useEffect(() => {
-    document.body.style.backgroundColor = BACKGRAY;
-    document.body.style.maxWidth = 400;
-  }, []);
+let theme = {
+  ...DefaultTheme,
+  colors: { ...DefaultTheme.colors, background: BACKGRAY },
+};
+
+export default () => {
   return (
     <>
       <StoresProvider>
@@ -64,72 +58,147 @@ function App() {
           <Routes />
         </EffectsProvider>
       </StoresProvider>
-      <ToastContainer />
-      <Toast />
+      <Toast config={toastConfig} />
     </>
   );
-}
-export default App;
+};
 
-let modal = { presentation: isDesktop ? "transparentModal" : "modal" },
-  transpModal = { presentation: "transparentModal" };
+let Stack = createStackNavigator(),
+  Tab = createBottomTabNavigator();
 
-let Routes = observer(() => {
+let transpModal = {
+    presentation: "transparentModal",
+    animationEnabled: false,
+  },
+  modal = isDesktop
+    ? transpModal
+    : { presentation: "modal", animationEnabled: true };
+
+let modalWrap = (name) => {
+  let Screen = screens[name];
+  if (!isDesktop) return Screen;
+
+  let width = [
+    "AddInfo",
+    "CoachModal",
+    "Balance",
+    "Order",
+    "BalanceStory",
+  ].includes(name)
+    ? modalWidth
+    : wwidth;
+
+  return (pr) => {
+    let { goBack: onPress } = pr.navigation;
+    return (
+      <View style={{ flex: 1, alignItems: "flex-end" }}>
+        <Press
+          {...{ onPress }}
+          style={{
+            ...StyleSheet.absoluteFill,
+            backgroundColor: "rgba(0, 0, 0, 0.3)",
+          }}
+        >
+          <CloseIcon
+            {...{ onPress }}
+            color="white"
+            size={40}
+            style={{
+              alignSelf: "flex-end",
+              margin: 24,
+              marginRight: width + 24,
+            }}
+          />
+        </Press>
+        <View style={{ flex: 1, width, backgroundColor: "white" }}>
+          <Screen {...pr} />
+        </View>
+      </View>
+    );
+  };
+};
+
+let renderModals = (name) => (
+  <Stack.Screen
+    {...{ name }}
+    component={name == "Image" ? screens.Image : modalWrap(name)}
+    options={
+      ["AddInfo", "AddGroup", "Image", "Filters"].includes(name)
+        ? transpModal
+        : modal
+    }
+    key={name}
+  />
+);
+
+let renderCards = (name) => (
+  <Stack.Screen
+    {...{ name }}
+    component={isDesktop ? modalWrap(name) : screens[name]}
+    options={isDesktop ? transpModal : undefined}
+    key={name}
+  />
+);
+
+const Routes = observer(() => {
   useFonts({
     "CeraPro-Medium": require("./assets/fonts/CeraPro-Medium.ttf"),
     "CeraPro-Regular": require("./assets/fonts/CeraPro-Regular.ttf"),
   });
 
   const mount = useRef(true),
-    { myid, age, getDBUser } = useAuth();
-  // useEffect(() => {
-  //   var signed = false;
-  //   onAuthStateChanged(auth, (user) => {
-  //     if (!user && signed) return (signed = false);
-  //     if (user && !signed && !myid && mount.current)
-  //       getDBUser(handleGoogleAuthUser(user)), (signed = true);
-  //   });
-  // }, []);
+    { myid, age, getDBUser, setLoad } = useAuth(),
+    [params, setParams] = useState();
+
+  useEffect(() => {
+    Linking.getInitialURL().then((d) => {
+      // let { path, queryParams } = Linking.parse(url);
+      console.log("LINKING", d);
+      if (d.length > "http://localhost:19006/profile".length)
+        window.location.href = "http://localhost:19006";
+      else setParams({ screen: "HomeStack" });
+    });
+
+    var signed = false;
+    onAuthStateChanged(auth, (user) => {
+      if (!user && signed) return (signed = false);
+      if (user && !signed && !myid && mount.current)
+        setLoad(true), getDBUser(handleGoogleAuthUser(user)), (signed = true);
+    });
+  }, []);
+
+  if (!params) return <Loader big />;
 
   return (
-    <NavigationContainer
-      ref={rootNavg} //{...{linking}}
-    >
-      <Stack.Navigator
-        screenOptions={{ headerShown: false, animationEnabled: true }}
-      >
-        {myid && !age && (
+    <NavigationContainer ref={rootNavg} {...{ linking, theme }}>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {myid && !age ? (
           <Stack.Screen
             name="EditProfile"
-            component={EditProfile}
+            component={screens.EditProfile}
             options={{ animationEnabled: false }}
           />
-        )}
-        {(!myid || (myid && age)) && (
+        ) : (
           <>
-            <Stack.Screen name="TabStack" component={TabNavigator} />
-            <Stack.Group screenOptions={modal}>
-              <Stack.Screen
-                name="CoachModal"
-                component={Coach}
-                initialParams={{ modal: true }}
-              />
-              <Stack.Screen name="Private" component={Private} />
-              <Stack.Screen name="Cart" component={Cart} />
-              <Stack.Screen
-                name="Filters"
-                component={Filters}
-                options={({ route: r }) =>
-                  ["Home", "Private"].includes(r.params.from) && transpModal
-                }
-              />
-              <Stack.Screen name="Balance" component={Balance} />
-            </Stack.Group>
-            <Stack.Group screenOptions={transpModal}>
-              <Stack.Screen name="AddInfo" component={AddInfo} />
-              <Stack.Screen name="AddGroup" component={AddGroup} />
-              <Stack.Screen name="Image" component={Image} />
-            </Stack.Group>
+            <Stack.Screen
+              name="TabStack"
+              component={TabNavigator}
+              initialParams={params}
+            />
+            {[
+              "CoachModal",
+              "Private",
+              "Cart",
+              "Balance",
+              "AddInfo",
+              "AddGroup",
+              "Filters",
+              "Image",
+            ].map(renderModals)}
+            {isDesktop &&
+              ["Event", "Order", "EditProfile", "BalanceStory"].map(
+                renderModals
+              )}
           </>
         )}
       </Stack.Navigator>
@@ -140,132 +209,139 @@ let Routes = observer(() => {
 let tabOptions = {
   headerShown: false,
   tabBarShowLabel: false,
-  tabBarStyle: { height: tabbarHeight },
+  tabBarStyle: { height: tabbarHeight, paddingHorizontal: deskPadding },
   tabBarItemStyle: {
     flex: 1,
     height: tabbarHeight,
     justifyContent: "center",
     alignItems: "center",
+    marginTop: -2,
   },
+  tabBarLabelStyle: { fontFamily: "CeraPro-Regular" },
   headerShown: false,
   tabBarActiveTintColor: BLUE,
   tabBarInactiveTintColor: "#CDCDCD",
 };
 
-const TabNavigator = observer(() => {
-  const { myid } = useAuth();
+const TabNavigator = ({ route: r }) => {
+  console.log("TAB", r.params);
   return (
     <Tab.Navigator screenOptions={tabOptions} initialRouteName={"HomeStack"}>
       <Tab.Screen
         name="HomeStack"
         component={HomeStack}
-        options={{ tabBarIcon: HomeTab, tabBarLabel: "Coaches" }}
+        options={{ tabBarIcon: HomeTab }}
       />
       <Tab.Screen
-        name="ProfileStack"
-        component={myid ? ProfileStack : Login}
-        options={{ tabBarIcon: UserTab, tabBarLabel: "Profile" }}
+        name={"ProfileStack"}
+        component={ProfileStack}
+        options={{ tabBarIcon: UserTab }}
       />
     </Tab.Navigator>
   );
-});
+};
 
 let HomeStack = () => (
   <Stack.Navigator
     initialRouteName="Home"
     screenOptions={({ route: { name }, navigation: { goBack } }) => ({
-      headerShown: name != "Coach" && name != "Home",
-      headerLeft: name == "Home" ? null : () => <BackTouch {...{ goBack }} />,
+      headerShown: isDesktop ? name == "Coach" : name != "Home",
+      headerLeft: () =>
+        isDesktop ? (
+          <BackButton {...{ goBack }} />
+        ) : (
+          <BackTouch {...{ goBack }} />
+        ),
       headerBackVisible: false,
-      headerTitle: "", //name == "Home" ? LOGO : "",
-      headerTitleAlign: "center",
-      headerStyle: { backgroundColor: name == "Home" ? BACKGRAY : "white" },
+      headerTitle: "",
+      headerStyle: {
+        backgroundColor: name == "Home" ? BACKGRAY : "white",
+        height: isDesktop ? 1 : undefined,
+      },
       animationEnabled: true,
     })}
   >
     <Stack.Screen
       name="Home"
-      component={Home}
-      options={{ animationEnabled: false }}
+      component={screens.Home}
+      options={{
+        animationEnabled: false,
+        title: "Rhythmic gymnastics online classes – BLOSS.am",
+      }}
     />
-    <Stack.Screen name="Coach" component={Coach} />
-    {EventScreen}
-    {OrderScreen}
+    <Stack.Screen name="Coach" component={screens.Coach} />
+    {!isDesktop && ["Event", "Order"].map(renderCards)}
   </Stack.Navigator>
 );
 
-let ProfileStack = () => (
-  <Stack.Navigator
-    initialRouteName="Profile"
-    screenOptions={({ route: { name }, navigation: { goBack } }) => {
-      let isEditPrf = name == "EditProfile";
-      return {
-        headerShown: name != "Profile",
-        headerLeft: () => (
-          <BackTouch color={isEditPrf && "white"} {...{ goBack }} />
-        ),
-        headerBackVisible: false,
-        headerTitle: ["Event", "Order"].includes(name)
-          ? ""
-          : () => (
-              <Text24
-                numberOfLines={1}
-                style={{ color: isEditPrf ? "white" : DGRAY }}
-              >
-                {isEditPrf ? "Edit profile" : "Account balance"}
-              </Text24>
+let ProfileStack = observer(() => {
+  const { myid } = useAuth();
+  return (
+    <Stack.Navigator
+      initialRouteName={myid ? "Profile" : "Login"}
+      screenOptions={({ route: { name }, navigation: { goBack } }) => {
+        let isEditPrf = name == "EditProfile";
+        return {
+          headerShown: isDesktop ? false : !["Profile", "Login"].includes(name),
+          headerLeft: () =>
+            isDesktop ? (
+              <BackButton {...{ goBack }} />
+            ) : (
+              <BackTouch color={isEditPrf && "white"} {...{ goBack }} />
             ),
-        headerStyle: { backgroundColor: "white" },
-        animationEnabled: true,
-      };
-    }}
-  >
-    <Stack.Screen
-      name="Profile"
-      component={Profile}
-      options={{ animationEnabled: false }}
-    />
-    {EventScreen}
-    {OrderScreen}
-    <Stack.Screen name="EditProfile" component={EditProfile} />
-    <Stack.Screen name="BalanceStory" component={BalanceStory} />
-  </Stack.Navigator>
-);
-
-let EventScreen = <Stack.Screen name="Event" component={Event} />,
-  OrderScreen = <Stack.Screen name="Order" component={Order} />;
-
-let HomeTab = ({ focused: foc }) => (
-    <>
-      <HomeIcon {...{ foc }} />
-      <IconLabel i={0} text="School" {...{ foc }} />
-    </>
-  ),
-  UserTab = ({ focused: foc }) => (
-    <>
-      <UserTabComp {...{ foc }} />
-      <IconLabel text="Profile" {...{ foc }} />
-    </>
-  ),
-  IconLabel = ({ foc, i, text }) => (
-    <Text11
-      style={{
-        marginTop: i == 0 ? 5 : 4,
-        color: foc ? BLUE : GRAY,
+          headerBackVisible: false,
+          headerTitle:
+            isEditPrf && !isDesktop
+              ? () => (
+                  <Text24 numberOfLines={1} style={{ color: "white" }}>
+                    Edit profile
+                  </Text24>
+                )
+              : "",
+          headerTitleAlign: "center",
+          headerStyle: {
+            backgroundColor: "white",
+            height: isDesktop ? 1 : undefined,
+          },
+          animationEnabled: true,
+        };
       }}
     >
-      {text}
-    </Text11>
+      {!myid && <Stack.Screen name="Login" component={screens.Login} />}
+      {myid && (
+        <>
+          <Stack.Screen
+            name="Profile"
+            component={screens.Profile}
+            options={{ animationEnabled: false }}
+          />
+          {!isDesktop &&
+            ["EditProfile", "BalanceStory", "Event", "Order"].map(renderCards)}
+        </>
+      )}
+    </Stack.Navigator>
   );
+});
 
-let UserTabComp = observer(({ foc }) => {
+let BackButton = ({ goBack: onPress }) => (
+  <Press {...{ onPress }} style={CloseButtonStyle("left")}>
+    <BackIcon />
+  </Press>
+);
+
+let HomeTab = ({ focused: foc }) => <GroupsIcon {...{ foc }} />;
+
+let UserTab = ({ focused: foc }) => (
+  <Row>
+    <UserIcon {...{ foc }} />
+    {!foc && <OrderMark />}
+  </Row>
+);
+
+let OrderMark = observer(() => {
   const { hasUnpaidOrder } = useClient();
-  return (
-    <Row>
-      <UserIcon {...{ foc }} />
-      {!foc && hasUnpaidOrder && <Mark />}
-    </Row>
-  );
+  if (!hasUnpaidOrder) return null;
+  return <Mark />;
 });
 
 let Mark = styled.View`
@@ -281,37 +357,51 @@ let Mark = styled.View`
 let linking = {
   config: {
     screens: {
+      NotFound: "*",
       AddInfo: {
-        path: "info",
+        path: "info/:id/:coachID",
         stringify: { id: () => ``, coachID: () => `` },
       },
       AddGroup: "add/:id",
       Balance: "balance",
       Filters: "filter",
-      Image: "i",
-      CoachModal: ":coachID",
+      Image: {
+        path: "/:uri",
+        stringify: { uri: () => `` },
+      },
+      CoachModal: "coaches/:coachID",
       TabStack: {
         screens: {
           HomeStack: {
             screens: {
               Home: "",
               Coach: {
-                path: "coaches/:coachID/:modal/:offset",
-                stringify: { modal: () => ``, offset: () => `` },
+                path: "coaches/:coachID/:offset",
+                stringify: { offset: () => `` },
               },
-              Event: ":id",
+              ...(!isDesktop && { Event: ":id", Order: "orders/:orderID" }),
             },
           },
           ProfileStack: {
             screens: {
               Profile: "profile",
-              EditProfile: "edit",
-              Event: ":eid",
-              Order: ":orderID",
+              Login: "login",
+              ...(!isDesktop && {
+                Event: ":id",
+                EditProfile: "edit",
+                Order: "orders/:orderID",
+                BalanceStory: "transactions",
+              }),
             },
           },
         },
       },
+      ...(isDesktop && {
+        Event: ":id",
+        EditProfile: "edit",
+        Order: "orders/:orderID",
+        BalanceStory: "transactions",
+      }),
     },
   },
 };

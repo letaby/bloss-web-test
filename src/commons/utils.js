@@ -5,7 +5,7 @@ import { confirmAlert } from "react-confirm-alert"; // Import
 import { getFirestore, collection, query, where } from "firebase/firestore";
 import { getDatabase } from "firebase/database";
 import { toast, cssTransition } from "react-toastify";
-import app from "../../config/index2";
+import app from "../../config/index";
 import dayjs from "dayjs";
 import orderBy from "lodash/orderBy";
 import { rootNavg } from "./RootNavigation";
@@ -24,6 +24,7 @@ export const {
   } = window,
   isDesktop = innerWidth > 450,
   wwidth = isDesktop ? 450 : innerWidth,
+  modalWidth = innerWidth > 900 ? 550 : wwidth,
   paddTop = 0,
   paddBottom = 0,
   tabbarHeight = 62 + paddBottom,

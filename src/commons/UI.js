@@ -209,7 +209,7 @@ export const MarkView = styled.View`
   margin-left: 18px;
 `;
 
-export const toastConfig = {
+export let toastConfig = {
   basic: (pr) => (
     <Press onPress={pr.onPress}>
       <ToastView>
@@ -221,10 +221,6 @@ export const toastConfig = {
   ),
 };
 
-export const WhiteStatusBar = (
-  <StatusBar barStyle="dark-content" backgroundColor="white" />
-);
-
 let ToastView = styled.View({
   width: wwidth - 24 * 2,
   minHeight: 54,
@@ -235,6 +231,10 @@ let ToastView = styled.View({
   paddingHorizontal: 16,
   zIndex: 1000,
 });
+
+export const WhiteStatusBar = (
+  <StatusBar barStyle="dark-content" backgroundColor="white" />
+);
 
 export const UserPic = ({ photo: uri, big, small, style: style0, ...r }) => {
   let size = r.size || (big ? 106 : small ? 32 : 84),
