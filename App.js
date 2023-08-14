@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
-import { Linking, StyleSheet, View } from "react-native";
+import React, { useEffect, useRef } from "react";
+import { StyleSheet, View } from "react-native";
 import styled from "styled-components/native";
 import "react-confirm-alert/src/react-confirm-alert.css";
 // import "react-lazy-load-image-component/src/effects/blur.css";
@@ -10,7 +10,6 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import Toast from "react-native-toast-message";
 import { onAuthStateChanged } from "firebase/auth";
 import { useFonts } from "expo-font";
-import Toast from "react-native-toast-message";
 import dayjs from "dayjs";
 require("dayjs/locale/en");
 dayjs.locale("en");
@@ -147,18 +146,9 @@ const Routes = observer(() => {
   });
 
   const mount = useRef(true),
-    { myid, age, getDBUser, setLoad } = useAuth(),
-    [params, setParams] = useState();
+    { myid, age, getDBUser, setLoad } = useAuth();
 
   useEffect(() => {
-    Linking.getInitialURL().then((d) => {
-      // let { path, queryParams } = Linking.parse(url);
-      console.log("LINKING", d);
-      if (d.length > "http://localhost:19006/profile".length)
-        window.location.href = "http://localhost:19006";
-      else setParams({ screen: "HomeStack" });
-    });
-
     var signed = false;
     onAuthStateChanged(auth, (user) => {
       if (!user && signed) return (signed = false);
@@ -166,8 +156,6 @@ const Routes = observer(() => {
         setLoad(true), getDBUser(handleGoogleAuthUser(user)), (signed = true);
     });
   }, []);
-
-  if (!params) return <Loader big />;
 
   return (
     <NavigationContainer ref={rootNavg} {...{ linking, theme }}>
@@ -180,11 +168,7 @@ const Routes = observer(() => {
           />
         ) : (
           <>
-            <Stack.Screen
-              name="TabStack"
-              component={TabNavigator}
-              initialParams={params}
-            />
+            <Stack.Screen name="TabStack" component={TabNavigator} />
             {[
               "CoachModal",
               "Private",
@@ -195,10 +179,6 @@ const Routes = observer(() => {
               "Filters",
               "Image",
             ].map(renderModals)}
-            {isDesktop &&
-              ["Event", "Order", "EditProfile", "BalanceStory"].map(
-                renderModals
-              )}
           </>
         )}
       </Stack.Navigator>
@@ -223,8 +203,8 @@ let tabOptions = {
   tabBarInactiveTintColor: "#CDCDCD",
 };
 
-const TabNavigator = ({ route: r }) => {
-  console.log("TAB", r.params);
+const TabNavigator = () => {
+  // const orderParams = link?.includes("orders/");
   return (
     <Tab.Navigator screenOptions={tabOptions} initialRouteName={"HomeStack"}>
       <Tab.Screen
@@ -270,7 +250,7 @@ let HomeStack = () => (
       }}
     />
     <Stack.Screen name="Coach" component={screens.Coach} />
-    {!isDesktop && ["Event", "Order"].map(renderCards)}
+    {["Event", "Order"].map(renderCards)}
   </Stack.Navigator>
 );
 
@@ -315,8 +295,8 @@ let ProfileStack = observer(() => {
             component={screens.Profile}
             options={{ animationEnabled: false }}
           />
-          {!isDesktop &&
-            ["EditProfile", "BalanceStory", "Event", "Order"].map(renderCards)}
+
+          {["EditProfile", "BalanceStory", "Event", "Order"].map(renderCards)}
         </>
       )}
     </Stack.Navigator>
@@ -356,52 +336,47 @@ let Mark = styled.View`
 
 let linking = {
   config: {
+    initialRouteName: "TabStack",
     screens: {
       NotFound: "*",
-      AddInfo: {
-        path: "info/:id/:coachID",
-        stringify: { id: () => ``, coachID: () => `` },
-      },
-      AddGroup: "add/:id",
-      Balance: "balance",
-      Filters: "filter",
-      Image: {
-        path: "/:uri",
-        stringify: { uri: () => `` },
-      },
       CoachModal: "coaches/:coachID",
       TabStack: {
+        initialRouteName: "HomeStack",
         screens: {
           HomeStack: {
+            initialRouteName: "Home",
             screens: {
               Home: "",
               Coach: {
                 path: "coaches/:coachID/:offset",
                 stringify: { offset: () => `` },
               },
-              ...(!isDesktop && { Event: ":id", Order: "orders/:orderID" }),
+              Event: "class/:id",
+              Order: "order/:orderID",
             },
           },
           ProfileStack: {
+            initialRouteName: "Profile",
             screens: {
               Profile: "profile",
               Login: "login",
-              ...(!isDesktop && {
-                Event: ":id",
-                EditProfile: "edit",
-                Order: "orders/:orderID",
-                BalanceStory: "transactions",
-              }),
+              Event: "classes/:id",
+              Order: "orders/:orderID",
             },
           },
         },
       },
-      ...(isDesktop && {
-        Event: ":id",
-        EditProfile: "edit",
-        Order: "orders/:orderID",
-        BalanceStory: "transactions",
-      }),
+      // AddInfo: {
+      //   path: "info/:id/:coachID",
+      //   stringify: { id: () => ``, coachID: () => `` },
+      // },
+      // AddGroup: "add/:id",
+      // Balance: "balance",
+      // Filters: "filter",
+      // Image: {
+      //   path: "/:uri",
+      //   stringify: { uri: () => `` },
+      // },
     },
   },
 };
