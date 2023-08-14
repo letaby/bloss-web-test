@@ -3,10 +3,9 @@ import { FlatList, View } from "react-native";
 import styled from "styled-components/native";
 import { observer } from "mobx-react-lite";
 import useStore, { useSchool } from "../commons/Stores";
-import { ages, getDay, wwidth } from "../commons/utils";
+import { ages, getDay, deskPadding } from "../commons/utils";
 import {
   Loader,
-  BACKGRAY,
   RowBetween,
   PageTitle,
   Refresher,
@@ -17,13 +16,14 @@ import {
   BLUE,
   BlankText,
   Press,
-  Container,
+  LOGO,
+  Row,
+  BORDERGRAY,
 } from "../commons/UI";
 import CoachCard from "../comp/CoachCard";
 import { EmptyText } from "../comp/CoachGroups";
 import Dates from "../comp/Dates";
 import EventCard from "../comp/EventCard";
-import Toast from "react-native-toast-message";
 
 export default observer(({ navigation: { navigate, getState } }) => {
   const {
@@ -46,10 +46,17 @@ export default observer(({ navigation: { navigate, getState } }) => {
     <CoachCard full {...{ programs, coach, navigate, getState }} />
   );
 
+  useEffect(() => {
+    // navigate("Event", { id: "2nnzp9pUSqhJv7jq3CJ3mGMqSQV2-1688945611414-1" });
+  }, []);
+
   if (load)
     return (
       <GrayContainer
-        style={{ justifyContent: "center", paddingHorizontal: 24 }}
+        style={{
+          justifyContent: "center",
+          paddingHorizontal: deskPadding + 24,
+        }}
       >
         <Loader />
         <BlankText>Loading coaches schedule</BlankText>
@@ -57,12 +64,28 @@ export default observer(({ navigation: { navigate, getState } }) => {
     );
 
   return (
-    <Container>
+    <GrayContainer>
       <FlatList
         data={filteredCoaches}
         {...listProps}
         renderItem={renderCoaches}
-        ListHeaderComponent={<Groups {...{ navigate }} />}
+        ListHeaderComponent={
+          <>
+            <Row
+              style={{
+                justifyContent: "center",
+                paddingBottom: 20,
+                marginBottom: 20,
+                marginHorizontal: -deskPadding - 24,
+                borderBottomWidth: 1,
+                borderBottomColor: BORDERGRAY,
+              }}
+            >
+              <LOGO />
+            </Row>
+            <Groups {...{ navigate }} />
+          </>
+        }
         ListEmptyComponent={
           <BlankView>
             <EmptyText>
@@ -74,10 +97,14 @@ export default observer(({ navigation: { navigate, getState } }) => {
             </Touch>
           </BlankView>
         }
-        contentContainerStyle={{ flexGrow: 1, padding: 24 }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          padding: 24,
+          paddingHorizontal: deskPadding + 24,
+        }}
         refreshControl={<Refresher update={onRefresh} />}
       />
-    </Container>
+    </GrayContainer>
   );
 });
 
@@ -96,7 +123,7 @@ let Groups = observer(({ navigate }) => {
   } = useStore();
 
   useEffect(() => {
-    if (!load) getAllGroups();
+    // if (!load) getAllGroups();
   }, [load]);
 
   const filtered =
@@ -113,12 +140,16 @@ let Groups = observer(({ navigate }) => {
     return pr;
   }, []);
 
-  const [day, setDay] = useState(nearestBook ? nearestBook.day : dates[0]),
+  const [day, setDay] = useState(nearestBook?.day || dates[0]),
     dayEvents = filtered.filter((e) => e.day == (day || dates[0])); // изнчально day state = undefined
 
   useEffect(() => {
     (!dates.includes(day) || !dayEvents[0]) && setDay(dates[0]);
   }, [progID, age, !dayEvents[0]]);
+
+  useEffect(() => {
+    if (nearestBook?.day && day != nearestBook?.day) setDay(nearestBook.day);
+  }, [nearestBook?.day]);
 
   const fltAgeName = age ? ages.find((a) => a.id >= age).name : "",
     fltProgName = progID ? programs[progID].short || programs[progID].name : "",
@@ -140,7 +171,7 @@ let Groups = observer(({ navigate }) => {
       <RowBetween>
         <PageTitle>Schedule</PageTitle>
         <FilterButton
-          onPress={() => navigate("Filters", { from: "Groups" })}
+          onPress={() => navigate("Filters", { from: "Home" })}
           active={progID || age}
           text={filterTitle}
         />
@@ -179,21 +210,8 @@ let Groups = observer(({ navigate }) => {
           )
         }
         contentContainerStyle={{ flexGrow: 1 }}
-        style={{ width: wwidth - 48 }}
       />
-      <Press
-        onPress={() =>
-          Toast.show({
-            duration: 500,
-            text1: "Hello",
-            text2: "This is some something 👋",
-          })
-        }
-      >
-        <PageTitle style={{ marginTop: 32, marginBottom: 18 }}>
-          Coaches
-        </PageTitle>
-      </Press>
+      <PageTitle style={{ marginTop: 32, marginBottom: 18 }}>Coaches</PageTitle>
     </>
   );
 });
@@ -211,5 +229,4 @@ let keyExtractor = (c) => c.uid || c.id,
     keyExtractor,
     ItemSeparatorComponent,
     getItemLayout,
-    style: { background: BACKGRAY, width: wwidth },
   };
