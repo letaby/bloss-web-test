@@ -59,7 +59,7 @@ class SchoolStore {
   // coaches = {};
   allPrograms = locprogs;
   coaches = loccoaches;
-  groups = null;
+  groups = {};
   filter = {};
 
   constructor() {
