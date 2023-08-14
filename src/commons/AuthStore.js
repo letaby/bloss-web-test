@@ -17,7 +17,7 @@ gProvider.addScope("profile");
 
 export default class Auth {
   load = false;
-  profile = {};
+  profile = user
 
   constructor() {
     makeAutoObservable(this);
